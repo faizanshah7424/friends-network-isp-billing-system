@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Customer, Package, Invoice, Payment, Complaint, Notification, SystemSettings } from '@/types';
+import { Customer, Package, Invoice, Payment, Complaint, Notification, SystemSettings, UserSession } from '@/types';
 import StartupSplash from '@/components/ui/StartupSplash';
 import {
   initialCustomers,
@@ -22,6 +22,8 @@ interface BillingSystemContextType {
   notifications: Notification[];
   settings: SystemSettings;
   rechargeCustomerId: string | null;
+  currentUser: UserSession;
+  setCurrentUser: (user: UserSession) => void;
   openRecharge: (customerId: string) => void;
   closeRecharge: () => void;
   addCustomer: (customer: Omit<Customer, 'id' | 'outstandingBalance' | 'timeline' | 'notes' | 'packageName'>) => Customer;
@@ -35,13 +37,14 @@ interface BillingSystemContextType {
   addInvoice: (invoice: Omit<Invoice, 'id' | 'grandTotal' | 'amountPaid' | 'outstandingBalance' | 'paymentStatus' | 'customerName'>) => Invoice;
   addPayment: (payment: Omit<Payment, 'id' | 'receivedBy'>) => { payment: Payment; invoice: Invoice | undefined };
   addComplaint: (complaint: Omit<Complaint, 'id' | 'ticketNumber' | 'status' | 'dateCreated' | 'timeline'>) => void;
-  updateComplaintStatus: (id: string, status: Complaint['status'], comment: string, engineer?: string) => void;
+  updateComplaintStatus: (id: string, status: Complaint['status'], comment: string, engineer?: string, engineerNotes?: string) => void;
   updateSettings: (settings: SystemSettings) => void;
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
   addCustomerNote: (customerId: string, text: string) => void;
   addBulkPayments: (payments: Omit<Payment, 'id' | 'receivedBy'>[]) => void;
 }
+
 
 const BillingSystemContext = createContext<BillingSystemContextType | undefined>(undefined);
 
@@ -55,6 +58,11 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
   const [settings, setSettings] = useState<SystemSettings>(defaultSettings);
   const [isLoaded, setIsLoaded] = useState(false);
   const [rechargeCustomerId, setRechargeCustomerId] = useState<string | null>(null);
+  const [currentUser, setCurrentUserState] = useState<UserSession>({
+    name: 'Muhammad Shahid',
+    role: 'Super Admin',
+    email: 'shahid@friendsnetwork.net',
+  });
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -66,14 +74,25 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
       const storedComplaints = localStorage.getItem('fnb_complaints');
       const storedNotifications = localStorage.getItem('fnb_notifications');
       const storedSettings = localStorage.getItem('fnb_settings');
+      const storedUser = localStorage.getItem('fnb_current_user');
 
-      setCustomers(storedCustomers ? JSON.parse(storedCustomers) : initialCustomers);
-      setPackages(storedPackages ? JSON.parse(storedPackages) : initialPackages);
-      setInvoices(storedInvoices ? JSON.parse(storedInvoices) : initialInvoices);
-      setPayments(storedPayments ? JSON.parse(storedPayments) : initialPayments);
-      setComplaints(storedComplaints ? JSON.parse(storedComplaints) : initialComplaints);
-      setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
-      setSettings(storedSettings ? JSON.parse(storedSettings) : defaultSettings);
+      setTimeout(() => {
+        setCustomers(storedCustomers ? JSON.parse(storedCustomers) : initialCustomers);
+        setPackages(storedPackages ? JSON.parse(storedPackages) : initialPackages);
+        setInvoices(storedInvoices ? JSON.parse(storedInvoices) : initialInvoices);
+        setPayments(storedPayments ? JSON.parse(storedPayments) : initialPayments);
+        setComplaints(storedComplaints ? JSON.parse(storedComplaints) : initialComplaints);
+        setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
+        setSettings(storedSettings ? JSON.parse(storedSettings) : defaultSettings);
+        
+        if (storedUser) {
+          try {
+            setCurrentUserState(JSON.parse(storedUser));
+          } catch (e) {
+            console.error('Failed to parse stored user', e);
+          }
+        }
+      }, 0);
       
       timer = setTimeout(() => {
         setIsLoaded(true);
@@ -84,11 +103,17 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
     };
   }, []);
 
-  const saveToLocalStorage = (key: string, data: any) => {
+  const saveToLocalStorage = (key: string, data: unknown) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(key, JSON.stringify(data));
     }
   };
+
+  const setCurrentUser = (user: UserSession) => {
+    setCurrentUserState(user);
+    saveToLocalStorage('fnb_current_user', user);
+  };
+
 
   const openRecharge = (customerId: string) => {
     setRechargeCustomerId(customerId);
@@ -447,19 +472,31 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
 
   const addComplaint = (complaintData: Omit<Complaint, 'id' | 'ticketNumber' | 'status' | 'dateCreated' | 'timeline'>) => {
     const nextTicket = `TIC-${1000 + complaints.length + 1}`;
+    
+    const timeline = [
+      {
+        status: 'Pending',
+        date: new Date().toLocaleString(),
+        comment: 'Complaint Created.',
+      },
+    ];
+    let initialStatus: Complaint['status'] = 'Pending';
+    if (complaintData.assignedEngineer && complaintData.assignedEngineer !== 'None') {
+      timeline.push({
+        status: 'Assigned',
+        date: new Date().toLocaleString(),
+        comment: `Assigned to ${complaintData.assignedEngineer}.`,
+      });
+      initialStatus = 'Assigned';
+    }
+
     const newComplaint: Complaint = {
       ...complaintData,
       id: `comp-${complaints.length + 1}`,
       ticketNumber: nextTicket,
-      status: 'Open',
+      status: initialStatus,
       dateCreated: new Date().toISOString().split('T')[0],
-      timeline: [
-        {
-          status: 'Open',
-          date: new Date().toLocaleString(),
-          comment: 'Ticket opened via admin panel.',
-        },
-      ],
+      timeline,
     };
 
     const updatedComplaints = [newComplaint, ...complaints];
@@ -502,9 +539,10 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
     saveToLocalStorage('fnb_notifications', updatedNotifs);
   };
 
-  const updateComplaintStatus = (id: string, status: Complaint['status'], comment: string, engineer?: string) => {
+  const updateComplaintStatus = (id: string, status: Complaint['status'], comment: string, engineer?: string, engineerNotes?: string) => {
     const updated = complaints.map((c) => {
       if (c.id === id) {
+        const isResolved = status === 'Resolved';
         const newTimeline = [
           ...c.timeline,
           {
@@ -518,10 +556,29 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
           status,
           assignedEngineer: engineer || c.assignedEngineer,
           timeline: newTimeline,
+          engineerNotes: engineerNotes || c.engineerNotes,
+          resolvedDate: isResolved ? new Date().toISOString().split('T')[0] : c.resolvedDate,
         };
       }
       return c;
     });
+
+    const targetComp = complaints.find((c) => c.id === id);
+    if (targetComp) {
+      const isResolved = status === 'Resolved';
+      const newNotif: Notification = {
+        id: `notif-${Date.now()}`,
+        type: isResolved ? 'complaint_resolved' : 'complaint_updated',
+        title: isResolved ? 'Complaint Resolved' : 'Complaint Status Updated',
+        message: `Ticket ${targetComp.ticketNumber} status updated to "${status}" by ${currentUser?.name || 'Staff'}. Notes: "${engineerNotes || 'None'}"`,
+        date: new Date().toLocaleString(),
+        isRead: false,
+      };
+      const updatedNotifs = [newNotif, ...notifications];
+      setNotifications(updatedNotifs);
+      saveToLocalStorage('fnb_notifications', updatedNotifs);
+    }
+
     setComplaints(updated);
     saveToLocalStorage('fnb_complaints', updated);
   };
@@ -576,6 +633,8 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
         notifications,
         settings,
         rechargeCustomerId,
+        currentUser,
+        setCurrentUser,
         openRecharge,
         closeRecharge,
         addCustomer,

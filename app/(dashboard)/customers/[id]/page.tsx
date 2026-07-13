@@ -40,6 +40,7 @@ export default function CustomerDetailsPage() {
     suspendCustomer,
     activateCustomer,
     openRecharge,
+    currentUser,
   } = useBillingSystem();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'billing' | 'notes'>('overview');
@@ -78,6 +79,21 @@ export default function CustomerDetailsPage() {
         <h2 className="text-xl font-bold">Customer Not Found</h2>
         <p className="text-sm text-muted-foreground mt-2">
           The customer record with ID &ldquo;{id}&rdquo; does not exist or has been deleted.
+        </p>
+        <Link href="/customers" className="mt-4 text-xs font-semibold text-primary hover:underline inline-block">
+          Return to directory
+        </Link>
+      </div>
+    );
+  }
+
+  // Enforce Sub Admin payment recovery restriction
+  if (currentUser.role === 'Sub Admin' && customer.paymentStatus === 'Paid') {
+    return (
+      <div className="text-center py-16 bg-card border border-border rounded-2xl space-y-4">
+        <h2 className="text-xl font-bold text-rose-500">Access Denied</h2>
+        <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+          As a Sub Administrator, you only have access to unpaid customer profiles for recovery. This customer is fully paid.
         </p>
         <Link href="/customers" className="mt-4 text-xs font-semibold text-primary hover:underline inline-block">
           Return to directory

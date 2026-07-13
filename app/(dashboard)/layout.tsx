@@ -4,9 +4,12 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Navbar from '@/components/Navbar';
 import RechargeDialog from '@/components/RechargeDialog';
-import { X } from 'lucide-react';
+import { X, ShieldAlert, ArrowLeft } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
+import { useBillingSystem } from '@/lib/context';
+import Link from 'next/link';
+
 export default function DashboardGroupLayout({
   children,
 }: {
@@ -14,9 +17,20 @@ export default function DashboardGroupLayout({
 }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const { currentUser } = useBillingSystem();
 
   const toggleMobileSidebar = () => setMobileSidebarOpen(!mobileSidebarOpen);
   const closeMobileSidebar = () => setMobileSidebarOpen(false);
+
+  const isRestricted = currentUser.role === 'Sub Admin' && [
+    '/billing',
+    '/payments/bulk',
+    '/invoices',
+    '/packages',
+    '/reports',
+    '/balance-sheet',
+    '/settings'
+  ].some(p => pathname.startsWith(p));
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">
@@ -72,7 +86,29 @@ export default function DashboardGroupLayout({
               exit={{ opacity: 0, scale: 0.99, transition: { duration: 0.15, ease: 'easeInOut' } }}
               className="mx-auto max-w-7xl space-y-6"
             >
-              {children}
+              {isRestricted ? (
+                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6 space-y-6">
+                  <div className="h-16 w-16 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 border border-rose-500/20 shadow-lg shadow-rose-500/5 animate-pulse">
+                    <ShieldAlert className="h-8 w-8" />
+                  </div>
+                  <div className="space-y-2 max-w-md">
+                    <h2 className="text-xl font-bold text-slate-800">Module Access Restricted</h2>
+                    <p className="text-sm text-slate-500 leading-relaxed">
+                      You are logged in as <span className="font-semibold text-slate-700">{currentUser.name} (Sub Administrator)</span>. 
+                      Your role does not have authorization to access the <span className="font-semibold text-rose-650 font-mono text-xs bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">{pathname}</span> module.
+                    </p>
+                  </div>
+                  <Link
+                    href="/"
+                    className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-4 text-xs font-semibold hover:bg-secondary transition-all"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>Return to Dashboard</span>
+                  </Link>
+                </div>
+              ) : (
+                children
+              )}
             </motion.div>
           </AnimatePresence>
         </main>

@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Network, ShieldCheck, Mail, Lock, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import LogoLoader from '@/components/ui/LogoLoader';
+import { useBillingSystem } from '@/lib/context';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setCurrentUser } = useBillingSystem();
   const [email, setEmail] = useState('shahid@friendsnetwork.net');
   const [password, setPassword] = useState('••••••••');
   const [isLoading, setIsLoading] = useState(false);
@@ -19,6 +21,19 @@ export default function LoginPage() {
     // Simulate authentication delay
     setTimeout(() => {
       setIsLoading(false);
+      if (email.toLowerCase().includes('noor')) {
+        setCurrentUser({
+          name: 'Noor Jamal',
+          role: 'Sub Admin',
+          email: 'noor@friendsnetwork.net',
+        });
+      } else {
+        setCurrentUser({
+          name: 'Muhammad Shahid',
+          role: 'Super Admin',
+          email: 'shahid@friendsnetwork.net',
+        });
+      }
       router.push('/');
     }, 1200);
   };
@@ -33,6 +48,7 @@ export default function LoginPage() {
       />
     );
   }
+
 
   return (
     <div className="min-h-screen w-screen flex items-center justify-center bg-slate-50 text-slate-800 font-sans p-4 relative overflow-hidden">
@@ -56,6 +72,43 @@ export default function LoginPage() {
           <div>
             <h1 className="text-2xl font-black tracking-tight text-slate-800">Friends Network</h1>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">Internet Service Provider</p>
+          </div>
+        </div>
+
+        {/* Quick Credentials / Role Selector */}
+        <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 text-left space-y-2.5">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Quick Login Profiles (Demo)</span>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('shahid@friendsnetwork.net');
+                setPassword('••••••••');
+              }}
+              className={`p-2.5 rounded-xl border text-[11px] font-bold text-left transition-all ${
+                email === 'shahid@friendsnetwork.net'
+                  ? 'border-blue-500 bg-blue-50/50 text-blue-600'
+                  : 'border-slate-200 hover:bg-slate-100/50 text-slate-650 bg-white'
+              }`}
+            >
+              <div className="font-extrabold truncate">Muhammad Shahid</div>
+              <div className="text-[9px] font-medium text-slate-400 mt-0.5">Super Admin</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('noor@friendsnetwork.net');
+                setPassword('••••••••');
+              }}
+              className={`p-2.5 rounded-xl border text-[11px] font-bold text-left transition-all ${
+                email === 'noor@friendsnetwork.net'
+                  ? 'border-emerald-500 bg-emerald-50/50 text-emerald-600'
+                  : 'border-slate-200 hover:bg-slate-100/50 text-slate-655 bg-white'
+              }`}
+            >
+              <div className="font-extrabold truncate">Noor Jamal</div>
+              <div className="text-[9px] font-medium text-slate-400 mt-0.5">Sub Admin</div>
+            </button>
           </div>
         </div>
 

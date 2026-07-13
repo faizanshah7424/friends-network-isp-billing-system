@@ -16,6 +16,8 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+
 
 export default function InvoicesPage() {
   const { invoices, settings, customers } = useBillingSystem();
@@ -127,8 +129,12 @@ export default function InvoicesPage() {
                   <tr key={inv.id} className="hover:bg-secondary/20 transition-all duration-150">
                     <td className="p-4 font-semibold text-indigo-500">{inv.id}</td>
                     <td className="p-4">
-                      <div className="font-semibold text-foreground">{inv.customerName}</div>
-                      <div className="text-xs text-muted-foreground">ID: {inv.customerId}</div>
+                      <Link href={`/customers/${inv.customerId}`} className="font-semibold text-foreground hover:underline hover:text-primary transition-colors block">
+                        {inv.customerName}
+                      </Link>
+                      <Link href={`/customers/${inv.customerId}`} className="text-xs text-indigo-500 hover:underline transition-colors block font-mono">
+                        ID: {inv.customerId}
+                      </Link>
                     </td>
                     <td className="p-4 font-medium text-xs">{inv.billingMonth}</td>
                     <td className="p-4 text-right font-bold">PKR {inv.grandTotal}</td>

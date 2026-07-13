@@ -26,7 +26,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CustomersPage() {
   const router = useRouter();
-  const { customers, suspendCustomer, activateCustomer, deleteCustomer, openRecharge } = useBillingSystem();
+  const { customers, suspendCustomer, activateCustomer, deleteCustomer, openRecharge, currentUser } = useBillingSystem();
   const [activeMenuRowId, setActiveMenuRowId] = useState<string | null>(null);
   
   // Simulated Loading State
@@ -85,6 +85,10 @@ export default function CustomersPage() {
   const filteredCustomers = useMemo(() => {
     let result = [...customers];
 
+    if (currentUser.role === 'Sub Admin') {
+      result = result.filter((c) => c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending');
+    }
+
     // Search term match
     if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase();
@@ -92,7 +96,8 @@ export default function CustomersPage() {
         (c) =>
           c.name.toLowerCase().includes(term) ||
           c.id.toLowerCase().includes(term) ||
-          c.phone.includes(term)
+          c.phone.includes(term) ||
+          (c.address && c.address.toLowerCase().includes(term))
       );
     }
 
@@ -127,7 +132,7 @@ export default function CustomersPage() {
     });
 
     return result;
-  }, [customers, searchTerm, areaFilter, statusFilter, paymentFilter, sortField, sortDirection]);
+  }, [customers, searchTerm, areaFilter, statusFilter, paymentFilter, sortField, sortDirection, currentUser]);
 
   // Paginated Customers
   const paginatedCustomers = useMemo(() => {
@@ -273,18 +278,20 @@ export default function CustomersPage() {
           </div>
 
           {/* Payment Status Select */}
-          <div>
-            <select
-              value={paymentFilter}
-              onChange={(e) => setPaymentFilter(e.target.value)}
-              className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3 text-xs outline-none transition-all focus:border-primary focus:bg-card"
-            >
-              <option value="All">All Payments</option>
-              <option value="Paid">Paid</option>
-              <option value="Unpaid">Unpaid</option>
-              <option value="Pending">Pending</option>
-            </select>
-          </div>
+          {currentUser.role !== 'Sub Admin' && (
+            <div>
+              <select
+                value={paymentFilter}
+                onChange={(e) => setPaymentFilter(e.target.value)}
+                className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3 text-xs outline-none transition-all focus:border-primary focus:bg-card"
+              >
+                <option value="All">All Payments</option>
+                <option value="Paid">Paid</option>
+                <option value="Unpaid">Unpaid</option>
+                <option value="Pending">Pending</option>
+              </select>
+            </div>
+          )}
         </div>
       </div>
 
@@ -297,83 +304,229 @@ export default function CustomersPage() {
             <span className="text-sm text-muted-foreground font-medium">Fetching customer directory...</span>
           </div>
         ) : paginatedCustomers.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-border bg-secondary/20 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  <th onClick={() => handleSort('id')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none">
-                    Customer ID {sortField === 'id' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th onClick={() => handleSort('name')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none">
-                    Customer Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th className="p-4">Package</th>
-                  <th onClick={() => handleSort('monthlyCharges')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none text-right">
-                    Charges {sortField === 'monthlyCharges' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th className="p-4">Area &amp; Contact</th>
-                  <th onClick={() => handleSort('connectionDate')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none">
-                    Joined Date {sortField === 'connectionDate' && (sortDirection === 'asc' ? '↑' : '↓')}
-                  </th>
-                  <th className="p-4">Payment</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border text-sm">
-                {paginatedCustomers.map((c) => (
-                  <tr key={c.id} className="hover:bg-secondary/20 transition-all duration-150">
-                    <td className="p-4 font-semibold text-indigo-500">
-                      <Link href={`/customers/${c.id}`} className="hover:underline hover:text-indigo-600 transition-colors">
-                        {c.id}
-                      </Link>
-                    </td>
-                    <td className="p-4">
-                      <Link href={`/customers/${c.id}`} className="font-semibold text-foreground hover:underline hover:text-primary transition-colors">
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border bg-secondary/20 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <th onClick={() => handleSort('id')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none">
+                      Customer ID {sortField === 'id' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th onClick={() => handleSort('name')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none">
+                      Customer Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="p-4">Package</th>
+                    <th onClick={() => handleSort('monthlyCharges')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none text-right">
+                      Charges {sortField === 'monthlyCharges' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="p-4">Area &amp; Contact</th>
+                    <th onClick={() => handleSort('connectionDate')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none">
+                      Joined Date {sortField === 'connectionDate' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="p-4">Payment</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border text-sm">
+                  {paginatedCustomers.map((c) => (
+                    <tr key={c.id} className="hover:bg-secondary/20 transition-all duration-150">
+                      <td className="p-4 font-semibold text-indigo-500">
+                        <Link href={`/customers/${c.id}`} className="hover:underline hover:text-indigo-600 transition-colors">
+                          {c.id}
+                        </Link>
+                      </td>
+                      <td className="p-4">
+                        <Link href={`/customers/${c.id}`} className="font-semibold text-foreground hover:underline hover:text-primary transition-colors">
+                          {c.name}
+                        </Link>
+                      </td>
+                      <td className="p-4 text-xs font-medium max-w-[150px] truncate">{c.packageName}</td>
+                      <td className="p-4 text-right font-bold">PKR {c.monthlyCharges}</td>
+                      <td className="p-4">
+                        <div className="text-xs font-medium text-foreground">{c.phone}</div>
+                        <div className="text-[11px] text-muted-foreground truncate max-w-[160px]">{c.address}</div>
+                      </td>
+                      <td className="p-4 text-xs text-muted-foreground">{c.connectionDate}</td>
+                      <td className="p-4">
+                        <StatusBadge status={c.paymentStatus} />
+                      </td>
+                      <td className="p-4">
+                        <StatusBadge status={c.connectionStatus} />
+                      </td>
+                      <td className="p-4 relative text-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveMenuRowId(activeMenuRowId === c.id ? null : c.id);
+                          }}
+                          className="mx-auto h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold flex items-center justify-center gap-1 transition-all"
+                        >
+                          <span>Actions</span>
+                          <span className="text-[9px] text-slate-400">▼</span>
+                        </button>
+
+                        {activeMenuRowId === c.id && (
+                          <>
+                            {/* Close menu overlay */}
+                            <div className="fixed inset-0 z-30" onClick={() => setActiveMenuRowId(null)} />
+                            
+                            {/* Dropdown Card */}
+                            <div className="absolute right-4 mt-1 z-40 w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-lg text-left">
+                              <button
+                                onClick={() => {
+                                  router.push(`/customers/${c.id}`);
+                                  setActiveMenuRowId(null);
+                                }}
+                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                              >
+                                View Profile
+                              </button>
+                              <button
+                                onClick={() => {
+                                  router.push(`/customers/${c.id}?tab=notes`);
+                                  setActiveMenuRowId(null);
+                                }}
+                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                              >
+                                Edit Details
+                              </button>
+                              <button
+                                onClick={() => {
+                                  openRecharge(c.id);
+                                  setActiveMenuRowId(null);
+                                }}
+                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
+                              >
+                                Update Bill
+                              </button>
+                              <button
+                                onClick={() => {
+                                  router.push(`/payments?customerId=${c.id}`);
+                                  setActiveMenuRowId(null);
+                                }}
+                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                              >
+                                Payment History
+                              </button>
+                              {c.connectionStatus === 'Active' ? (
+                                <button
+                                  onClick={() => {
+                                    setConfirmDialog({
+                                      isOpen: true,
+                                      type: 'suspend',
+                                      customerId: c.id,
+                                      customerName: c.name,
+                                    });
+                                    setActiveMenuRowId(null);
+                                  }}
+                                  className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-50/50 transition-colors"
+                                >
+                                  Suspend Connection
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setConfirmDialog({
+                                      isOpen: true,
+                                      type: 'activate',
+                                      customerId: c.id,
+                                      customerName: c.name,
+                                    });
+                                    setActiveMenuRowId(null);
+                                  }}
+                                  className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-50/50 transition-colors"
+                                >
+                                  Activate Connection
+                                </button>
+                              )}
+                              <div className="h-px bg-slate-100 my-1" />
+                              <button
+                                onClick={() => {
+                                  setConfirmDialog({
+                                    isOpen: true,
+                                    type: 'delete',
+                                    customerId: c.id,
+                                    customerName: c.name,
+                                  });
+                                  setActiveMenuRowId(null);
+                                }}
+                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-55 hover:bg-rose-50 transition-colors"
+                              >
+                                Delete Client
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards List View */}
+            <div className="md:hidden grid grid-cols-1 gap-4 p-4">
+              {paginatedCustomers.map((c) => (
+                <div key={c.id} className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
+                  <div className="flex justify-between items-start text-left">
+                    <div>
+                      <Link href={`/customers/${c.id}`} className="font-semibold text-foreground hover:underline text-sm">
                         {c.name}
                       </Link>
-                    </td>
-                    <td className="p-4 text-xs font-medium max-w-[150px] truncate">{c.packageName}</td>
-                    <td className="p-4 text-right font-bold">PKR {c.monthlyCharges}</td>
-                    <td className="p-4">
-                      <div className="text-xs font-medium text-foreground">{c.phone}</div>
-                      <div className="text-[11px] text-muted-foreground truncate max-w-[160px]">{c.address}</div>
-                    </td>
-                    <td className="p-4 text-xs text-muted-foreground">{c.connectionDate}</td>
-                    <td className="p-4">
-                      <StatusBadge status={c.paymentStatus} />
-                    </td>
-                    <td className="p-4">
+                      <div className="text-xs text-indigo-500 font-semibold font-mono mt-0.5">{c.id}</div>
+                    </div>
+                    <div className="flex gap-1 flex-shrink-0">
                       <StatusBadge status={c.connectionStatus} />
-                    </td>
-                    <td className="p-4 relative text-center">
+                      <StatusBadge status={c.paymentStatus} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-border/50 py-2.5 my-2 text-left">
+                    <div>
+                      <span className="text-[10px] text-muted-foreground block font-bold uppercase">Package</span>
+                      <span className="font-medium text-foreground">{c.packageName}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-muted-foreground block font-bold uppercase">Charges</span>
+                      <span className="font-bold text-foreground">PKR {c.monthlyCharges}</span>
+                    </div>
+                    <div className="mt-1">
+                      <span className="text-[10px] text-muted-foreground block font-bold uppercase">Contact</span>
+                      <span className="font-medium text-foreground">{c.phone}</span>
+                    </div>
+                    <div className="text-right mt-1">
+                      <span className="text-[10px] text-muted-foreground block font-bold uppercase">Area</span>
+                      <span className="font-medium text-foreground">{c.area}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center gap-2 pt-1">
+                    <Link
+                      href={`/customers/${c.id}`}
+                      className="flex-1 flex h-8 items-center justify-center rounded-xl border border-border bg-card text-xs font-semibold hover:bg-secondary transition-all"
+                    >
+                      View Profile
+                    </Link>
+                    
+                    {/* Action Dropdown Trigger for Mobile */}
+                    <div className="relative flex-1">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setActiveMenuRowId(activeMenuRowId === c.id ? null : c.id);
                         }}
-                        className="mx-auto h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold flex items-center justify-center gap-1 transition-all"
+                        className="w-full flex h-8 items-center justify-center gap-1.5 rounded-xl bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/95 transition-all"
                       >
                         <span>Actions</span>
-                        <span className="text-[9px] text-slate-400">▼</span>
+                        <span className="text-[9px]">▼</span>
                       </button>
 
                       {activeMenuRowId === c.id && (
                         <>
-                          {/* Close menu overlay */}
-                          <div className="fixed inset-0 z-30" onClick={() => setActiveMenuRowId(null)} />
-                          
-                          {/* Dropdown Card */}
-                          <div className="absolute right-4 mt-1 z-40 w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-lg text-left">
-                            <button
-                              onClick={() => {
-                                router.push(`/customers/${c.id}`);
-                                setActiveMenuRowId(null);
-                              }}
-                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                            >
-                              View Profile
-                            </button>
+                          <div className="fixed inset-0 z-35" onClick={() => setActiveMenuRowId(null)} />
+                          <div className="absolute right-0 bottom-10 z-40 w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-lg text-left">
                             <button
                               onClick={() => {
                                 router.push(`/customers/${c.id}?tab=notes`);
@@ -450,12 +603,12 @@ export default function CustomersPage() {
                           </div>
                         </>
                       )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
           /* Empty State */
           <div className="p-12 text-center">

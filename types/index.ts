@@ -79,17 +79,22 @@ export interface Complaint {
   ticketNumber: string; // TIC-XXXX
   customerId: string;
   customerName: string;
+  mobileNumber?: string;
+  area?: string;
+  category?: string;
   issue: string;
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   assignedEngineer: string;
-  status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
+  status: 'Pending' | 'Assigned' | 'In Progress' | 'Resolved' | 'Closed';
   timeline: { status: string; date: string; comment: string }[];
   dateCreated: string;
+  resolvedDate?: string;
+  engineerNotes?: string;
 }
 
 export interface Notification {
   id: string;
-  type: 'payment_received' | 'payment_pending' | 'connection_expired' | 'new_customer' | 'complaint_created';
+  type: 'payment_received' | 'payment_pending' | 'connection_expired' | 'new_customer' | 'complaint_created' | 'complaint_resolved' | 'complaint_updated';
   title: string;
   message: string;
   date: string;
@@ -106,3 +111,10 @@ export interface SystemSettings {
   invoiceFooter: string;
   receiptFooter: string;
 }
+
+export interface UserSession {
+  name: string;
+  role: 'Super Admin' | 'Sub Admin';
+  email: string;
+}
+

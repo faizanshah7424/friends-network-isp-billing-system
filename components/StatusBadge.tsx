@@ -2,7 +2,7 @@ import React from 'react';
 import { ConnectionStatus, PaymentStatus } from '@/types';
 
 interface StatusBadgeProps {
-  status: ConnectionStatus | PaymentStatus | 'Open' | 'In Progress' | 'Resolved' | 'Closed' | 'Low' | 'Medium' | 'High' | 'Critical';
+  status: ConnectionStatus | PaymentStatus | 'Pending' | 'Assigned' | 'Open' | 'In Progress' | 'Resolved' | 'Closed' | 'Low' | 'Medium' | 'High' | 'Critical';
 }
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
@@ -23,6 +23,8 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
         return 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20';
       
       // Ticket Status
+      case 'Assigned':
+        return 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20';
       case 'Open':
         return 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20';
       case 'In Progress':

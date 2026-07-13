@@ -16,7 +16,7 @@ import {
   Bell,
   Settings,
   LogOut,
-  Network,
+  Landmark,
 } from 'lucide-react';
 import { useBillingSystem } from '@/lib/context';
 
@@ -26,7 +26,7 @@ interface SidebarProps {
 
 export default function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { notifications } = useBillingSystem();
+  const { notifications, currentUser } = useBillingSystem();
 
   const unreadNotifs = notifications.filter((n) => !n.isRead).length;
 
@@ -40,9 +40,20 @@ export default function Sidebar({ onClose }: SidebarProps) {
     { label: 'Packages', href: '/packages', icon: Wifi },
     { label: 'Complaints', href: '/complaints', icon: AlertCircle },
     { label: 'Reports', href: '/reports', icon: BarChart3 },
+    { label: 'Balance Sheet', href: '/balance-sheet', icon: Landmark },
     { label: 'Notifications', href: '/notifications', icon: Bell, badge: unreadNotifs },
     { label: 'Settings', href: '/settings', icon: Settings },
   ];
+
+  const filteredNavItems = navItems.filter((item) => {
+    if (currentUser.role === 'Sub Admin') {
+      return ['Dashboard', 'Customers', 'Payments', 'Complaints', 'Notifications'].includes(item.label);
+    }
+    if (currentUser.role === 'Super Admin') {
+      return ['Dashboard', 'Customers', 'Billing', 'Payments', 'Bulk Payments', 'Invoices', 'Packages', 'Complaints', 'Reports', 'Balance Sheet', 'Settings'].includes(item.label);
+    }
+    return true;
+  });
 
   const isActive = (href: string) => {
     if (href === '/') {
@@ -64,7 +75,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
       {/* Navigation Items */}
       <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
-        {navItems.map((item) => {
+        {filteredNavItems.map((item) => {
           const active = isActive(item.href);
           const Icon = item.icon;
 
@@ -101,14 +112,22 @@ export default function Sidebar({ onClose }: SidebarProps) {
       <div className="p-4 border-t border-border bg-slate-500/5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-blue-50 flex items-center justify-center border border-primary/20">
-              <span className="font-bold text-sm text-blue-600">MS</span>
+            <div className={`relative h-10 w-10 overflow-hidden rounded-xl flex items-center justify-center border ${
+              currentUser.role === 'Sub Admin'
+                ? 'bg-emerald-50 text-emerald-600 border-emerald-500/20'
+                : 'bg-blue-50 text-blue-600 border-primary/20'
+            }`}>
+              <span className="font-bold text-sm">
+                {currentUser.name === 'Noor Jamal' ? 'NJ' : 'MS'}
+              </span>
               {/* Green indicator online */}
               <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-card" />
             </div>
             <div className="flex flex-col text-left">
-              <span className="text-xs font-semibold leading-none">Muhammad Shahid</span>
-              <span className="text-[10px] text-muted-foreground mt-1">Super Administrator</span>
+              <span className="text-xs font-semibold leading-none">{currentUser.name}</span>
+              <span className="text-[10px] text-muted-foreground mt-1">
+                {currentUser.role === 'Sub Admin' ? 'Sub Administrator' : 'Super Administrator'}
+              </span>
             </div>
           </div>
 

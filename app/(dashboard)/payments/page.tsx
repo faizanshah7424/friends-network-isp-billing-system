@@ -22,13 +22,15 @@ import {
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import LogoLoader from '@/components/ui/LogoLoader';
+import StatusBadge from '@/components/StatusBadge';
 
 export default function PaymentsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const targetCustomerId = searchParams.get('customerId');
 
-  const { customers, addPayment, settings, payments, invoices } = useBillingSystem();
+  const { customers, addPayment, settings, payments, invoices, currentUser } = useBillingSystem();
+  const isSubAdmin = currentUser.role === 'Sub Admin';
 
   // Form State
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
@@ -87,13 +89,17 @@ export default function PaymentsPage() {
   const searchResults = useMemo(() => {
     if (searchQuery.trim() === '') return [];
     const term = searchQuery.toLowerCase();
-    return customers.filter(
+    let list = [...customers];
+    if (isSubAdmin) {
+      list = list.filter((c) => c.outstandingBalance > 0 || c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending');
+    }
+    return list.filter(
       (c) =>
         c.name.toLowerCase().includes(term) ||
         c.id.toLowerCase().includes(term) ||
         c.phone.includes(term)
     );
-  }, [customers, searchQuery]);
+  }, [customers, searchQuery, isSubAdmin]);
 
   // Selected customer details
   const currentCustomer = useMemo(() => {
@@ -385,35 +391,88 @@ export default function PaymentsPage() {
           </form>
         </div>
 
-        {/* History / Recent Payments list on the right */}
-        <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
-          <div>
-            <h3 className="font-bold text-base">Recent Payments Log</h3>
-            <p className="text-xs text-muted-foreground">Last recorded receipts at the billing desk</p>
-          </div>
-
-          <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
-            {payments.map((p) => (
-              <div key={p.id} className="flex justify-between items-center p-3.5 rounded-xl border border-border hover:bg-secondary/40 transition-colors">
-                <div>
-                  <p className="text-xs font-bold text-foreground">{p.customerName}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{p.id} • {p.paymentMethod} • {p.paymentDate.split(' ')[0]}</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs font-bold text-emerald-500">PKR {p.amountReceived}</span>
-                  <button
-                    onClick={() => {
-                      setRecentReceipt(p);
-                      setShowReceiptModal(true);
-                    }}
-                    className="text-[10px] text-primary font-bold hover:underline block mt-1"
-                  >
-                    Print PDF
-                  </button>
-                </div>
+        {/* History Ledger (Super Admin) or Pending Collections Ledger (Sub Admin) */}
+        <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4 text-left">
+          {isSubAdmin ? (
+            <>
+              <div>
+                <h3 className="font-bold text-base">Pending Collections Ledger</h3>
+                <p className="text-xs text-muted-foreground">Select customer with unpaid dues to clear balance</p>
               </div>
-            ))}
-          </div>
+
+              <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                {customers
+                  .filter((c) => c.outstandingBalance > 0 || c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending')
+                  .map((c) => (
+                    <div
+                      key={c.id}
+                      onClick={() => {
+                        setSelectedCustomerId(c.id);
+                        setSearchQuery(`${c.name} (${c.id})`);
+                      }}
+                      className="p-3.5 rounded-xl border border-border bg-rose-500/[0.02] hover:bg-secondary/40 cursor-pointer transition-colors space-y-2.5"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-xs font-bold text-slate-800 hover:underline">{c.name}</span>
+                          <span className="text-[10px] text-indigo-500 font-mono block mt-0.5">{c.id} • {c.phone}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-black text-rose-500">PKR {c.outstandingBalance}</span>
+                          <span className="text-[9px] text-slate-400 block mt-0.5">Due: July 10, 2026</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] text-slate-500 border-t border-border/40 pt-2">
+                        <span className="truncate max-w-[120px]">Plan: {c.packageName}</span>
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          <StatusBadge status={c.connectionStatus} />
+                          <StatusBadge status={c.paymentStatus} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                {customers.filter((c) => c.outstandingBalance > 0 || c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending').length === 0 && (
+                  <div className="text-center p-8 text-xs text-muted-foreground">
+                    All customer accounts are fully cleared! No pending collections.
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <h3 className="font-bold text-base">Recent Payments Log</h3>
+                <p className="text-xs text-muted-foreground">Last recorded receipts at the billing desk</p>
+              </div>
+
+              <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                {payments.map((p) => (
+                  <div key={p.id} className="flex justify-between items-center p-3.5 rounded-xl border border-border hover:bg-secondary/40 transition-colors">
+                    <div>
+                      <Link href={`/customers/${p.customerId}`} className="text-xs font-bold text-foreground hover:underline hover:text-primary transition-colors block">
+                        {p.customerName}
+                      </Link>
+                      <Link href={`/customers/${p.customerId}`} className="text-[10px] text-indigo-500 hover:underline mt-0.5 block font-mono">
+                        {p.customerId} • {p.paymentMethod} • {p.paymentDate.split(' ')[0]}
+                      </Link>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-emerald-500">PKR {p.amountReceived}</span>
+                      <button
+                        onClick={() => {
+                          setRecentReceipt(p);
+                          setShowReceiptModal(true);
+                        }}
+                        className="text-[10px] text-primary font-bold hover:underline block mt-1"
+                      >
+                        Print PDF
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
       </div>

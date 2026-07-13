@@ -365,14 +365,18 @@ export const initialComplaints: Complaint[] = [
     ticketNumber: 'TIC-1024',
     customerId: 'FNB-1002',
     customerName: 'Ayesha Khan',
+    mobileNumber: '0300-1234567',
+    area: 'DHA Phase 6',
+    category: 'Slow Speed',
     issue: 'High latency and packet loss during video calls.',
     priority: 'High',
-    assignedEngineer: 'Yasir Ahmed',
+    assignedEngineer: 'Noor Jamal',
     status: 'In Progress',
     dateCreated: '2026-07-11',
     timeline: [
-      { status: 'Open', date: '2026-07-11 11:30 AM', comment: 'Ticket created by customer app.' },
-      { status: 'In Progress', date: '2026-07-12 09:15 AM', comment: 'Yasir assigned. DHA node inspected.' }
+      { status: 'Pending', date: '2026-07-11 11:30 AM', comment: 'Ticket created by customer app.' },
+      { status: 'Assigned', date: '2026-07-11 12:00 PM', comment: 'Ticket assigned to Noor Jamal.' },
+      { status: 'In Progress', date: '2026-07-12 09:15 AM', comment: 'Noor Jamal began checking DHA distribution hub.' }
     ]
   },
   {
@@ -380,13 +384,16 @@ export const initialComplaints: Complaint[] = [
     ticketNumber: 'TIC-1025',
     customerId: 'FNB-1006',
     customerName: 'Hamza Siddiqui',
+    mobileNumber: '0321-9876543',
+    area: 'Clifton Block 5',
+    category: 'Fiber Outage',
     issue: 'Complete connection outage / Red light on ONU.',
     priority: 'Critical',
-    assignedEngineer: 'Yasir Ahmed',
-    status: 'Open',
+    assignedEngineer: 'Noor Jamal',
+    status: 'Pending',
     dateCreated: '2026-07-13',
     timeline: [
-      { status: 'Open', date: '2026-07-13 08:00 AM', comment: 'Outage reported. Red LOS light verified.' }
+      { status: 'Pending', date: '2026-07-13 08:00 AM', comment: 'Outage reported. Red LOS light verified.' }
     ]
   },
   {
@@ -394,14 +401,20 @@ export const initialComplaints: Complaint[] = [
     ticketNumber: 'TIC-1021',
     customerId: 'FNB-1001',
     customerName: 'Muhammad Ali',
+    mobileNumber: '0312-3456789',
+    area: 'Gulshan-e-Iqbal Block 3',
+    category: 'Router Configuration',
     issue: 'Router configuration - port forwarding required.',
     priority: 'Low',
-    assignedEngineer: 'Naveed Akhtar',
+    assignedEngineer: 'Noor Jamal',
     status: 'Resolved',
     dateCreated: '2026-07-09',
+    resolvedDate: '2026-07-09',
+    engineerNotes: 'Port forwarding port 8080 configured. Checked connectivity.',
     timeline: [
-      { status: 'Open', date: '2026-07-09 03:00 PM', comment: 'Customer requests port 8080 forward.' },
-      { status: 'Resolved', date: '2026-07-09 04:30 PM', comment: 'Forwarded via TR-069.' }
+      { status: 'Pending', date: '2026-07-09 03:00 PM', comment: 'Customer requests port 8080 forward.' },
+      { status: 'Assigned', date: '2026-07-09 03:30 PM', comment: 'Assigned to Noor Jamal' },
+      { status: 'Resolved', date: '2026-07-09 04:30 PM', comment: 'Forwarded via TR-069. Marked as Resolved.' }
     ]
   }
 ];

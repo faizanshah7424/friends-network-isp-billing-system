@@ -1,0 +1,519 @@
+'use client';
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Customer, Package, Invoice, Payment, Complaint, Notification, SystemSettings } from '@/types';
+import {
+  initialCustomers,
+  initialPackages,
+  initialInvoices,
+  initialPayments,
+  initialComplaints,
+  initialNotifications,
+  defaultSettings,
+} from '@/data/dummyData';
+
+interface BillingSystemContextType {
+  customers: Customer[];
+  packages: Package[];
+  invoices: Invoice[];
+  payments: Payment[];
+  complaints: Complaint[];
+  notifications: Notification[];
+  settings: SystemSettings;
+  rechargeCustomerId: string | null;
+  openRecharge: (customerId: string) => void;
+  closeRecharge: () => void;
+  addCustomer: (customer: Omit<Customer, 'id' | 'outstandingBalance' | 'timeline' | 'notes' | 'packageName'>) => Customer;
+  updateCustomer: (customer: Customer) => void;
+  deleteCustomer: (id: string) => void;
+  suspendCustomer: (id: string) => void;
+  activateCustomer: (id: string) => void;
+  addPackage: (pkg: Omit<Package, 'id'>) => void;
+  updatePackage: (pkg: Package) => void;
+  deletePackage: (id: string) => void;
+  addInvoice: (invoice: Omit<Invoice, 'id' | 'grandTotal' | 'amountPaid' | 'outstandingBalance' | 'paymentStatus' | 'customerName'>) => Invoice;
+  addPayment: (payment: Omit<Payment, 'id' | 'receivedBy'>) => { payment: Payment; invoice: Invoice | undefined };
+  addComplaint: (complaint: Omit<Complaint, 'id' | 'ticketNumber' | 'status' | 'dateCreated' | 'timeline'>) => void;
+  updateComplaintStatus: (id: string, status: Complaint['status'], comment: string, engineer?: string) => void;
+  updateSettings: (settings: SystemSettings) => void;
+  markNotificationAsRead: (id: string) => void;
+  markAllNotificationsAsRead: () => void;
+  addCustomerNote: (customerId: string, text: string) => void;
+}
+
+const BillingSystemContext = createContext<BillingSystemContextType | undefined>(undefined);
+
+export function BillingSystemProvider({ children }: { children: React.ReactNode }) {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [settings, setSettings] = useState<SystemSettings>(defaultSettings);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [rechargeCustomerId, setRechargeCustomerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedCustomers = localStorage.getItem('fnb_customers');
+      const storedPackages = localStorage.getItem('fnb_packages');
+      const storedInvoices = localStorage.getItem('fnb_invoices');
+      const storedPayments = localStorage.getItem('fnb_payments');
+      const storedComplaints = localStorage.getItem('fnb_complaints');
+      const storedNotifications = localStorage.getItem('fnb_notifications');
+      const storedSettings = localStorage.getItem('fnb_settings');
+
+      setCustomers(storedCustomers ? JSON.parse(storedCustomers) : initialCustomers);
+      setPackages(storedPackages ? JSON.parse(storedPackages) : initialPackages);
+      setInvoices(storedInvoices ? JSON.parse(storedInvoices) : initialInvoices);
+      setPayments(storedPayments ? JSON.parse(storedPayments) : initialPayments);
+      setComplaints(storedComplaints ? JSON.parse(storedComplaints) : initialComplaints);
+      setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
+      setSettings(storedSettings ? JSON.parse(storedSettings) : defaultSettings);
+      setIsLoaded(true);
+    }
+  }, []);
+
+  const saveToLocalStorage = (key: string, data: any) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+  };
+
+  const openRecharge = (customerId: string) => {
+    setRechargeCustomerId(customerId);
+  };
+
+  const closeRecharge = () => {
+    setRechargeCustomerId(null);
+  };
+
+  const addCustomer = (customerData: Omit<Customer, 'id' | 'outstandingBalance' | 'timeline' | 'notes' | 'packageName'>) => {
+    const pkg = packages.find((p) => p.id === customerData.packageId);
+    const packageName = pkg ? pkg.name : 'Unknown Package';
+    const nextId = `FNB-${1000 + customers.length + 1}`;
+    
+    const newCustomer: Customer = {
+      ...customerData,
+      id: nextId,
+      packageName,
+      outstandingBalance: 0,
+      timeline: [
+        {
+          id: `t-${Date.now()}`,
+          title: 'Customer Added',
+          description: `Customer account registered under plan ${packageName}.`,
+          date: new Date().toISOString().split('T')[0],
+          type: 'success',
+        },
+      ],
+      notes: [],
+    };
+
+    const updated = [newCustomer, ...customers];
+    setCustomers(updated);
+    saveToLocalStorage('fnb_customers', updated);
+
+    // Create a notification
+    const newNotif: Notification = {
+      id: `notif-${Date.now()}`,
+      type: 'new_customer',
+      title: 'New Customer Registered',
+      message: `${newCustomer.name} (${newCustomer.id}) has been added under package ${packageName}.`,
+      date: new Date().toLocaleString(),
+      isRead: false,
+    };
+    const updatedNotifs = [newNotif, ...notifications];
+    setNotifications(updatedNotifs);
+    saveToLocalStorage('fnb_notifications', updatedNotifs);
+
+    return newCustomer;
+  };
+
+  const updateCustomer = (updatedCustomer: Customer) => {
+    const updated = customers.map((c) => (c.id === updatedCustomer.id ? updatedCustomer : c));
+    setCustomers(updated);
+    saveToLocalStorage('fnb_customers', updated);
+  };
+
+  const deleteCustomer = (id: string) => {
+    const updated = customers.filter((c) => c.id !== id);
+    setCustomers(updated);
+    saveToLocalStorage('fnb_customers', updated);
+  };
+
+  const suspendCustomer = (id: string) => {
+    const updated = customers.map((c) => {
+      if (c.id === id) {
+        return {
+          ...c,
+          connectionStatus: 'Inactive' as const,
+          timeline: [
+            {
+              id: `t-${Date.now()}`,
+              title: 'Connection Suspended',
+              description: 'Connection manually deactivated by admin.',
+              date: new Date().toISOString().split('T')[0],
+              type: 'error' as const,
+            },
+            ...c.timeline,
+          ],
+        };
+      }
+      return c;
+    });
+    setCustomers(updated);
+    saveToLocalStorage('fnb_customers', updated);
+  };
+
+  const activateCustomer = (id: string) => {
+    const updated = customers.map((c) => {
+      if (c.id === id) {
+        return {
+          ...c,
+          connectionStatus: 'Active' as const,
+          timeline: [
+            {
+              id: `t-${Date.now()}`,
+              title: 'Connection Activated',
+              description: 'Connection manually re-activated by admin.',
+              date: new Date().toISOString().split('T')[0],
+              type: 'success' as const,
+            },
+            ...c.timeline,
+          ],
+        };
+      }
+      return c;
+    });
+    setCustomers(updated);
+    saveToLocalStorage('fnb_customers', updated);
+  };
+
+  const addPackage = (packageData: Omit<Package, 'id'>) => {
+    const newPkg: Package = {
+      ...packageData,
+      id: `pkg-${packages.length + 1}`,
+    };
+    const updated = [...packages, newPkg];
+    setPackages(updated);
+    saveToLocalStorage('fnb_packages', updated);
+  };
+
+  const updatePackage = (updatedPkg: Package) => {
+    const updated = packages.map((p) => (p.id === updatedPkg.id ? updatedPkg : p));
+    setPackages(updated);
+    saveToLocalStorage('fnb_packages', updated);
+  };
+
+  const deletePackage = (id: string) => {
+    const updated = packages.filter((p) => p.id !== id);
+    setPackages(updated);
+    saveToLocalStorage('fnb_packages', updated);
+  };
+
+  const addInvoice = (invoiceData: Omit<Invoice, 'id' | 'grandTotal' | 'amountPaid' | 'outstandingBalance' | 'paymentStatus' | 'customerName'>) => {
+    const customer = customers.find((c) => c.id === invoiceData.customerId);
+    const customerName = customer ? customer.name : 'Unknown Customer';
+    
+    const subtotal = invoiceData.monthlyCharges + invoiceData.previousDue + invoiceData.additionalCharges;
+    const discount = invoiceData.discount;
+    const tax = invoiceData.tax;
+    const grandTotal = Math.max(0, subtotal - discount + tax);
+
+    const newInvoice: Invoice = {
+      ...invoiceData,
+      id: `INV-2026-${1000 + invoices.length + 1}`,
+      customerName,
+      grandTotal,
+      amountPaid: 0,
+      outstandingBalance: grandTotal,
+      paymentStatus: 'Unpaid',
+    };
+
+    const updatedInvoices = [newInvoice, ...invoices];
+    setInvoices(updatedInvoices);
+    saveToLocalStorage('fnb_invoices', updatedInvoices);
+
+    // Update customer outstanding balance and status
+    const updatedCustomers = customers.map((c) => {
+      if (c.id === invoiceData.customerId) {
+        return {
+          ...c,
+          outstandingBalance: c.outstandingBalance + grandTotal,
+          paymentStatus: 'Unpaid' as const,
+          timeline: [
+            {
+              id: `t-${Date.now()}`,
+              title: 'Invoice Generated',
+              description: `Invoice ${newInvoice.id} generated for ${invoiceData.billingMonth} for PKR ${grandTotal}.`,
+              date: new Date().toISOString().split('T')[0],
+              type: 'info' as const,
+            },
+            ...c.timeline,
+          ],
+        };
+      }
+      return c;
+    });
+    setCustomers(updatedCustomers);
+    saveToLocalStorage('fnb_customers', updatedCustomers);
+
+    // Notification
+    const newNotif: Notification = {
+      id: `notif-${Date.now()}`,
+      type: 'payment_pending',
+      title: 'Invoice Generated',
+      message: `Invoice ${newInvoice.id} generated for ${customerName} - PKR ${grandTotal}.`,
+      date: new Date().toLocaleString(),
+      isRead: false,
+    };
+    const updatedNotifs = [newNotif, ...notifications];
+    setNotifications(updatedNotifs);
+    saveToLocalStorage('fnb_notifications', updatedNotifs);
+
+    return newInvoice;
+  };
+
+  const addPayment = (paymentData: Omit<Payment, 'id' | 'receivedBy'>) => {
+    const newPaymentId = `REC-2026-${1000 + payments.length + 1}`;
+    const newPayment: Payment = {
+      ...paymentData,
+      id: newPaymentId,
+      receivedBy: 'Muhammad Shahid',
+    };
+
+    const updatedPayments = [newPayment, ...payments];
+    setPayments(updatedPayments);
+    saveToLocalStorage('fnb_payments', updatedPayments);
+
+    // Find unpaid invoices for this customer and mark them paid
+    let remainingPayment = paymentData.amountReceived;
+    let customerInvoice: Invoice | undefined;
+
+    const updatedInvoices = invoices.map((inv) => {
+      if (inv.customerId === paymentData.customerId && inv.paymentStatus !== 'Paid') {
+        customerInvoice = inv;
+        const canPay = Math.min(inv.outstandingBalance, remainingPayment);
+        const newOutstanding = inv.outstandingBalance - canPay;
+        const newPaid = inv.amountPaid + canPay;
+        remainingPayment -= canPay;
+        
+        return {
+          ...inv,
+          amountPaid: newPaid,
+          outstandingBalance: newOutstanding,
+          paymentStatus: newOutstanding === 0 ? ('Paid' as const) : ('Pending' as const),
+        };
+      }
+      return inv;
+    });
+
+    setInvoices(updatedInvoices);
+    saveToLocalStorage('fnb_invoices', updatedInvoices);
+
+    // Update customer status and outstanding balance
+    const updatedCustomers = customers.map((c) => {
+      if (c.id === paymentData.customerId) {
+        const newOutstanding = Math.max(0, c.outstandingBalance - paymentData.amountReceived);
+        return {
+          ...c,
+          outstandingBalance: newOutstanding,
+          paymentStatus: newOutstanding === 0 ? ('Paid' as const) : ('Pending' as const),
+          timeline: [
+            {
+              id: `t-${Date.now()}`,
+              title: 'Payment Received',
+              description: `Received PKR ${paymentData.amountReceived} via ${paymentData.paymentMethod}. Ref: ${paymentData.referenceNumber || 'N/A'}.`,
+              date: new Date().toISOString().split('T')[0],
+              type: 'success' as const,
+            },
+            ...c.timeline,
+          ],
+        };
+      }
+      return c;
+    });
+    setCustomers(updatedCustomers);
+    saveToLocalStorage('fnb_customers', updatedCustomers);
+
+    // Notification
+    const newNotif: Notification = {
+      id: `notif-${Date.now()}`,
+      type: 'payment_received',
+      title: 'Payment Received',
+      message: `${paymentData.customerName} paid PKR ${paymentData.amountReceived} via ${paymentData.paymentMethod}.`,
+      date: new Date().toLocaleString(),
+      isRead: false,
+    };
+    const updatedNotifs = [newNotif, ...notifications];
+    setNotifications(updatedNotifs);
+    saveToLocalStorage('fnb_notifications', updatedNotifs);
+
+    return { payment: newPayment, invoice: customerInvoice };
+  };
+
+  const addComplaint = (complaintData: Omit<Complaint, 'id' | 'ticketNumber' | 'status' | 'dateCreated' | 'timeline'>) => {
+    const nextTicket = `TIC-${1000 + complaints.length + 1}`;
+    const newComplaint: Complaint = {
+      ...complaintData,
+      id: `comp-${complaints.length + 1}`,
+      ticketNumber: nextTicket,
+      status: 'Open',
+      dateCreated: new Date().toISOString().split('T')[0],
+      timeline: [
+        {
+          status: 'Open',
+          date: new Date().toLocaleString(),
+          comment: 'Ticket opened via admin panel.',
+        },
+      ],
+    };
+
+    const updatedComplaints = [newComplaint, ...complaints];
+    setComplaints(updatedComplaints);
+    saveToLocalStorage('fnb_complaints', updatedComplaints);
+
+    // Update customer timeline
+    const updatedCustomers = customers.map((c) => {
+      if (c.id === complaintData.customerId) {
+        return {
+          ...c,
+          timeline: [
+            {
+              id: `t-${Date.now()}`,
+              title: 'Complaint Logged',
+              description: `Logged complaint ticket ${nextTicket}: ${complaintData.issue}`,
+              date: new Date().toISOString().split('T')[0],
+              type: 'warning' as const,
+            },
+            ...c.timeline,
+          ],
+        };
+      }
+      return c;
+    });
+    setCustomers(updatedCustomers);
+    saveToLocalStorage('fnb_customers', updatedCustomers);
+
+    // Notification
+    const newNotif: Notification = {
+      id: `notif-${Date.now()}`,
+      type: 'complaint_created',
+      title: 'Complaint Logged',
+      message: `Ticket ${nextTicket} registered for ${complaintData.customerName}: "${complaintData.issue.substring(0, 40)}..."`,
+      date: new Date().toLocaleString(),
+      isRead: false,
+    };
+    const updatedNotifs = [newNotif, ...notifications];
+    setNotifications(updatedNotifs);
+    saveToLocalStorage('fnb_notifications', updatedNotifs);
+  };
+
+  const updateComplaintStatus = (id: string, status: Complaint['status'], comment: string, engineer?: string) => {
+    const updated = complaints.map((c) => {
+      if (c.id === id) {
+        const newTimeline = [
+          ...c.timeline,
+          {
+            status,
+            date: new Date().toLocaleString(),
+            comment,
+          },
+        ];
+        return {
+          ...c,
+          status,
+          assignedEngineer: engineer || c.assignedEngineer,
+          timeline: newTimeline,
+        };
+      }
+      return c;
+    });
+    setComplaints(updated);
+    saveToLocalStorage('fnb_complaints', updated);
+  };
+
+  const updateSettings = (newSettings: SystemSettings) => {
+    setSettings(newSettings);
+    saveToLocalStorage('fnb_settings', newSettings);
+  };
+
+  const markNotificationAsRead = (id: string) => {
+    const updated = notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n));
+    setNotifications(updated);
+    saveToLocalStorage('fnb_notifications', updated);
+  };
+
+  const markAllNotificationsAsRead = () => {
+    const updated = notifications.map((n) => ({ ...n, isRead: true }));
+    setNotifications(updated);
+    saveToLocalStorage('fnb_notifications', updated);
+  };
+
+  const addCustomerNote = (customerId: string, text: string) => {
+    const updated = customers.map((c) => {
+      if (c.id === customerId) {
+        return {
+          ...c,
+          notes: [
+            {
+              id: `n-${Date.now()}`,
+              text,
+              date: new Date().toISOString().split('T')[0],
+              author: 'Muhammad Shahid (Admin)',
+            },
+            ...c.notes,
+          ],
+        };
+      }
+      return c;
+    });
+    setCustomers(updated);
+    saveToLocalStorage('fnb_customers', updated);
+  };
+
+  return (
+    <BillingSystemContext.Provider
+      value={{
+        customers,
+        packages,
+        invoices,
+        payments,
+        complaints,
+        notifications,
+        settings,
+        rechargeCustomerId,
+        openRecharge,
+        closeRecharge,
+        addCustomer,
+        updateCustomer,
+        deleteCustomer,
+        suspendCustomer,
+        activateCustomer,
+        addPackage,
+        updatePackage,
+        deletePackage,
+        addInvoice,
+        addPayment,
+        addComplaint,
+        updateComplaintStatus,
+        updateSettings,
+        markNotificationAsRead,
+        markAllNotificationsAsRead,
+        addCustomerNote,
+      }}
+    >
+      {isLoaded ? children : <div className="h-screen w-screen flex items-center justify-center bg-slate-50 text-slate-800 font-sans text-xl animate-pulse">Loading Friends Network Dashboard...</div>}
+    </BillingSystemContext.Provider>
+  );
+}
+
+export function useBillingSystem() {
+  const context = useContext(BillingSystemContext);
+  if (!context) {
+    throw new Error('useBillingSystem must be used within a BillingSystemProvider');
+  }
+  return context;
+}

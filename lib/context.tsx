@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Customer, Package, Invoice, Payment, Complaint, Notification, SystemSettings } from '@/types';
+import StartupSplash from '@/components/ui/StartupSplash';
 import {
   initialCustomers,
   initialPackages,
@@ -39,6 +40,7 @@ interface BillingSystemContextType {
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
   addCustomerNote: (customerId: string, text: string) => void;
+  addBulkPayments: (payments: Omit<Payment, 'id' | 'receivedBy'>[]) => void;
 }
 
 const BillingSystemContext = createContext<BillingSystemContextType | undefined>(undefined);
@@ -55,6 +57,7 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
   const [rechargeCustomerId, setRechargeCustomerId] = useState<string | null>(null);
 
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     if (typeof window !== 'undefined') {
       const storedCustomers = localStorage.getItem('fnb_customers');
       const storedPackages = localStorage.getItem('fnb_packages');
@@ -71,8 +74,14 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
       setComplaints(storedComplaints ? JSON.parse(storedComplaints) : initialComplaints);
       setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
       setSettings(storedSettings ? JSON.parse(storedSettings) : defaultSettings);
-      setIsLoaded(true);
+      
+      timer = setTimeout(() => {
+        setIsLoaded(true);
+      }, 2200);
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   const saveToLocalStorage = (key: string, data: any) => {
@@ -219,8 +228,7 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
     
     const subtotal = invoiceData.monthlyCharges + invoiceData.previousDue + invoiceData.additionalCharges;
     const discount = invoiceData.discount;
-    const tax = invoiceData.tax;
-    const grandTotal = Math.max(0, subtotal - discount + tax);
+    const grandTotal = Math.max(0, subtotal - discount);
 
     const newInvoice: Invoice = {
       ...invoiceData,
@@ -352,6 +360,89 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
     saveToLocalStorage('fnb_notifications', updatedNotifs);
 
     return { payment: newPayment, invoice: customerInvoice };
+  };
+
+  const addBulkPayments = (paymentsData: Omit<Payment, 'id' | 'receivedBy'>[]) => {
+    let tempPayments = [...payments];
+    let tempInvoices = [...invoices];
+    let tempCustomers = [...customers];
+    let tempNotifications = [...notifications];
+
+    paymentsData.forEach((payData, idx) => {
+      const newPaymentId = `REC-2026-${1000 + tempPayments.length + 1}`;
+      const newPayment: Payment = {
+        ...payData,
+        id: newPaymentId,
+        receivedBy: 'Muhammad Shahid',
+      };
+
+      tempPayments = [newPayment, ...tempPayments];
+
+      // Find unpaid invoices for this customer and mark them paid
+      let remainingPayment = payData.amountReceived;
+      tempInvoices = tempInvoices.map((inv) => {
+        if (inv.customerId === payData.customerId && inv.paymentStatus !== 'Paid') {
+          const canPay = Math.min(inv.outstandingBalance, remainingPayment);
+          const newOutstanding = inv.outstandingBalance - canPay;
+          const newPaid = inv.amountPaid + canPay;
+          remainingPayment -= canPay;
+          
+          return {
+            ...inv,
+            amountPaid: newPaid,
+            outstandingBalance: newOutstanding,
+            paymentStatus: newOutstanding === 0 ? ('Paid' as const) : ('Pending' as const),
+          };
+        }
+        return inv;
+      });
+
+      // Update customer status and outstanding balance
+      tempCustomers = tempCustomers.map((c) => {
+        if (c.id === payData.customerId) {
+          const newOutstanding = Math.max(0, c.outstandingBalance - payData.amountReceived);
+          return {
+            ...c,
+            outstandingBalance: newOutstanding,
+            paymentStatus: newOutstanding === 0 ? ('Paid' as const) : ('Pending' as const),
+            timeline: [
+              {
+                id: `t-${Date.now()}-${idx}`,
+                title: 'Payment Received (Bulk)',
+                description: `Received PKR ${payData.amountReceived} via ${payData.paymentMethod} in bulk update.`,
+                date: new Date().toISOString().split('T')[0],
+                type: 'success' as const,
+              },
+              ...c.timeline,
+            ],
+          };
+        }
+        return c;
+      });
+
+      // Create notification
+      const newNotif: Notification = {
+        id: `notif-${Date.now()}-${idx}`,
+        type: 'payment_received',
+        title: 'Payment Received (Bulk)',
+        message: `${payData.customerName} paid PKR ${payData.amountReceived} via ${payData.paymentMethod} (Bulk).`,
+        date: new Date().toLocaleString(),
+        isRead: false,
+      };
+      tempNotifications = [newNotif, ...tempNotifications];
+    });
+
+    setPayments(tempPayments);
+    saveToLocalStorage('fnb_payments', tempPayments);
+
+    setInvoices(tempInvoices);
+    saveToLocalStorage('fnb_invoices', tempInvoices);
+
+    setCustomers(tempCustomers);
+    saveToLocalStorage('fnb_customers', tempCustomers);
+
+    setNotifications(tempNotifications);
+    saveToLocalStorage('fnb_notifications', tempNotifications);
   };
 
   const addComplaint = (complaintData: Omit<Complaint, 'id' | 'ticketNumber' | 'status' | 'dateCreated' | 'timeline'>) => {
@@ -503,9 +594,10 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
         markNotificationAsRead,
         markAllNotificationsAsRead,
         addCustomerNote,
+        addBulkPayments,
       }}
     >
-      {isLoaded ? children : <div className="h-screen w-screen flex items-center justify-center bg-slate-50 text-slate-800 font-sans text-xl animate-pulse">Loading Friends Network Dashboard...</div>}
+      {isLoaded ? children : <StartupSplash />}
     </BillingSystemContext.Provider>
   );
 }

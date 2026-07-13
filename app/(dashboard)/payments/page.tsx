@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useBillingSystem } from '@/lib/context';
 import { Payment } from '@/types';
@@ -21,13 +21,14 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import LogoLoader from '@/components/ui/LogoLoader';
 
 export default function PaymentsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const targetCustomerId = searchParams.get('customerId');
 
-  const { customers, addPayment, settings, payments } = useBillingSystem();
+  const { customers, addPayment, settings, payments, invoices } = useBillingSystem();
 
   // Form State
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
@@ -38,9 +39,18 @@ export default function PaymentsPage() {
   const [paymentDate, setPaymentDate] = useState('');
   const [notes, setNotes] = useState('');
 
+  // Smart Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
   // Receipt Modal State
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [recentReceipt, setRecentReceipt] = useState<Payment | null>(null);
+
+  // Submitting / Printing States
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   // Set default payment date to current date/time on mount
   useEffect(() => {
@@ -54,14 +64,68 @@ export default function PaymentsPage() {
       const exists = customers.some((c) => c.id === targetCustomerId);
       if (exists) {
         setSelectedCustomerId(targetCustomerId);
+        const cust = customers.find((c) => c.id === targetCustomerId);
+        if (cust) {
+          setSearchQuery(`${cust.name} (${cust.id})`);
+        }
       }
     }
   }, [targetCustomerId, customers]);
+
+  // Click outside to close search dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filtered search results
+  const searchResults = useMemo(() => {
+    if (searchQuery.trim() === '') return [];
+    const term = searchQuery.toLowerCase();
+    return customers.filter(
+      (c) =>
+        c.name.toLowerCase().includes(term) ||
+        c.id.toLowerCase().includes(term) ||
+        c.phone.includes(term)
+    );
+  }, [customers, searchQuery]);
 
   // Selected customer details
   const currentCustomer = useMemo(() => {
     return customers.find((c) => c.id === selectedCustomerId);
   }, [customers, selectedCustomerId]);
+
+  // Receipt customer details
+  const receiptCustomer = useMemo(() => {
+    if (!recentReceipt) return null;
+    return customers.find((c) => c.id === recentReceipt.customerId);
+  }, [customers, recentReceipt]);
+
+  // Receipt invoice details
+  const receiptInvoice = useMemo(() => {
+    if (!recentReceipt) return null;
+    return invoices.find(
+      (inv) =>
+        inv.customerId === recentReceipt.customerId &&
+        inv.billingMonth === recentReceipt.billingMonth
+    );
+  }, [invoices, recentReceipt]);
+
+  const getNextExpiryDate = (connectionDate?: string) => {
+    if (!connectionDate) return 'N/A';
+    try {
+      const conn = new Date(connectionDate);
+      conn.setDate(conn.getDate() + 30);
+      return conn.toISOString().split('T')[0];
+    } catch {
+      return 'N/A';
+    }
+  };
 
   // Auto-populate outstanding balance to amount received
   useEffect(() => {
@@ -74,6 +138,8 @@ export default function PaymentsPage() {
     e.preventDefault();
     if (!selectedCustomerId || amountReceived <= 0) return;
 
+    setIsSubmitting(true);
+
     const paymentData = {
       customerId: selectedCustomerId,
       customerName: currentCustomer ? currentCustomer.name : 'Unknown Customer',
@@ -85,27 +151,54 @@ export default function PaymentsPage() {
       notes: notes || undefined,
     };
 
-    const { payment } = addPayment(paymentData);
-    setRecentReceipt(payment);
-    setShowReceiptModal(true);
+    setTimeout(() => {
+      const { payment } = addPayment(paymentData);
+      setRecentReceipt(payment);
+      setShowReceiptModal(true);
 
-    // Reset Form
-    setReferenceNumber('');
-    setNotes('');
+      // Reset Form
+      setReferenceNumber('');
+      setNotes('');
+      setIsSubmitting(false);
+    }, 1200);
   };
 
   const handlePrint = () => {
-    window.print();
+    setIsPrinting(true);
+    setTimeout(() => {
+      window.print();
+      setIsPrinting(false);
+    }, 1000);
   };
 
   const handleDownloadFakePDF = () => {
-    // Standard print styling opens native PDF converter on most browsers
-    window.print();
+    setIsPrinting(true);
+    setTimeout(() => {
+      window.print();
+      setIsPrinting(false);
+    }, 1000);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {isSubmitting && (
+        <LogoLoader
+          overlay
+          text="Recording Payment..."
+          subtext="Friends Network ISP Billing System"
+          loadingText="Posting credit adjustments to customer ledger..."
+        />
+      )}
+      {isPrinting && (
+        <LogoLoader
+          overlay
+          text="Generating PDF Receipt..."
+          subtext="Friends Network ISP Billing System"
+          loadingText="Preparing print layouts and page margins..."
+        />
+      )}
+      <div className="space-y-6 print:hidden">
+        {/* Header */}
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight">Record Payment</h1>
         <p className="text-muted-foreground text-sm mt-1">
@@ -122,22 +215,69 @@ export default function PaymentsPage() {
           </div>
 
           <form onSubmit={handleCollectPayment} className="space-y-5">
-            {/* Customer Dropdown */}
-            <div className="space-y-1.5">
+            {/* Customer Smart Search */}
+            <div ref={searchRef} className="space-y-1.5 relative">
               <label className="text-xs font-semibold text-muted-foreground">Select Customer *</label>
-              <select
-                value={selectedCustomerId}
-                onChange={(e) => setSelectedCustomerId(e.target.value)}
-                required
-                className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-xs outline-none transition-all focus:border-primary focus:bg-card"
-              >
-                <option value="">-- Choose Client --</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.id}) • Bal: PKR {c.outstandingBalance}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search customer by ID, Name, or Mobile..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setSelectedCustomerId('');
+                    setShowSearchDropdown(true);
+                  }}
+                  onFocus={() => setShowSearchDropdown(true)}
+                  required
+                  className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-xs outline-none transition-all focus:border-primary focus:bg-card"
+                />
+                {selectedCustomerId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCustomerId('');
+                      setSearchQuery('');
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              {showSearchDropdown && searchResults.length > 0 && (
+                <div className="absolute top-16 z-50 w-full rounded-xl border border-border bg-card p-2 shadow-lg max-h-60 overflow-y-auto">
+                  {searchResults.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCustomerId(c.id);
+                        setSearchQuery(`${c.name} (${c.id})`);
+                        setShowSearchDropdown(false);
+                      }}
+                      className="flex w-full items-center justify-between rounded-lg p-2 text-left hover:bg-secondary transition-colors"
+                    >
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">{c.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{c.id} • {c.phone} • Bal: PKR {c.outstandingBalance}</p>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                        c.connectionStatus === 'Active'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                      }`}>
+                        {c.connectionStatus}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showSearchDropdown && searchQuery.trim() !== '' && searchResults.length === 0 && (
+                <div className="absolute top-16 z-50 w-full rounded-xl border border-border bg-card p-4 text-center shadow-lg">
+                  <p className="text-xs text-muted-foreground">No customers found matching &ldquo;{searchQuery}&rdquo;</p>
+                </div>
+              )}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -276,6 +416,7 @@ export default function PaymentsPage() {
           </div>
         </div>
       </div>
+      </div>
 
       {/* Printable Receipt Modal */}
       <AnimatePresence>
@@ -327,15 +468,42 @@ export default function PaymentsPage() {
                   <div>
                     <span className="text-muted-foreground font-semibold uppercase text-[8px] block">Received From</span>
                     <p className="font-bold mt-1 text-sm">{recentReceipt.customerName}</p>
-                    <p className="text-muted-foreground mt-0.5">Account ID: {recentReceipt.customerId}</p>
-                    <p className="text-muted-foreground mt-0.5">Plan Rate: PKR {currentCustomer ? currentCustomer.monthlyCharges : ''}/mo</p>
+                    <p className="text-muted-foreground mt-0.5">Customer ID: <span className="font-semibold text-foreground">{recentReceipt.customerId}</span></p>
+                    <p className="text-muted-foreground mt-0.5">Package: <span className="font-semibold text-foreground">{receiptCustomer?.packageName || 'N/A'}</span></p>
                   </div>
                   <div className="text-right">
-                    <span className="text-muted-foreground font-semibold uppercase text-[8px] block">Payment Info</span>
-                    <p className="font-bold mt-1">Method: {recentReceipt.paymentMethod}</p>
-                    <p className="text-muted-foreground mt-0.5">Ref No: {recentReceipt.referenceNumber || 'N/A'}</p>
-                    <p className="text-muted-foreground mt-0.5">Billing Month: {recentReceipt.billingMonth}</p>
-                    <p className="text-muted-foreground mt-0.5">Date: {recentReceipt.paymentDate}</p>
+                    <span className="text-muted-foreground font-semibold uppercase text-[8px] block">Receipt Info</span>
+                    <p className="text-muted-foreground mt-0.5">Payment Date: <span className="font-semibold text-foreground">{recentReceipt.paymentDate}</span></p>
+                    <p className="text-muted-foreground mt-0.5">Expiry Date: <span className="font-semibold text-foreground">{getNextExpiryDate(receiptCustomer?.connectionDate)}</span></p>
+                    <p className="text-muted-foreground mt-0.5">Billing Month: <span className="font-semibold text-foreground">{recentReceipt.billingMonth}</span></p>
+                  </div>
+                </div>
+
+                {/* Ledger Details Table */}
+                <div className="space-y-2 border-b border-border pb-4 text-[10px]">
+                  <div className="flex justify-between font-semibold text-muted-foreground uppercase text-[8px]">
+                    <span>Description</span>
+                    <span>Amount</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Monthly Plan Charges</span>
+                    <span>PKR {receiptInvoice ? receiptInvoice.monthlyCharges : (receiptCustomer ? receiptCustomer.monthlyCharges : 0)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Previous Arrears Due</span>
+                    <span>PKR {receiptInvoice ? receiptInvoice.previousDue : 0}</span>
+                  </div>
+                  <div className="flex justify-between text-rose-500/90">
+                    <span className="text-muted-foreground">Additional Surcharges</span>
+                    <span>PKR {receiptInvoice ? receiptInvoice.additionalCharges : 0}</span>
+                  </div>
+                  <div className="flex justify-between text-emerald-600">
+                    <span className="text-muted-foreground">Promotional Discount</span>
+                    <span>-PKR {receiptInvoice ? receiptInvoice.discount : 0}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-border pt-1.5 font-bold text-foreground">
+                    <span>Grand Total Due</span>
+                    <span>PKR {receiptInvoice ? receiptInvoice.grandTotal : (receiptCustomer ? receiptCustomer.monthlyCharges : 0)}</span>
                   </div>
                 </div>
 
@@ -343,7 +511,7 @@ export default function PaymentsPage() {
                 <div className="bg-emerald-500/10 dark:bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 flex justify-between items-center">
                   <div>
                     <span className="text-[8px] font-bold uppercase text-emerald-600 dark:text-emerald-400">Total Net Amount Cleared</span>
-                    <p className="text-xs text-muted-foreground mt-0.5">No outstanding taxes remaining for {recentReceipt.billingMonth}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Remaining Balance: PKR {receiptInvoice ? receiptInvoice.outstandingBalance : 0}</p>
                   </div>
                   <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">PKR {recentReceipt.amountReceived}</span>
                 </div>

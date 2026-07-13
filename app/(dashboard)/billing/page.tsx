@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useBillingSystem } from '@/lib/context';
 import { Invoice } from '@/types';
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import LogoLoader from '@/components/ui/LogoLoader';
 
 export default function BillingPage() {
   const router = useRouter();
@@ -36,6 +37,11 @@ export default function BillingPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [generatedInvoiceId, setGeneratedInvoiceId] = useState('');
 
+  // Smart Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
   // Months list for dropdown
   const months = ['January 2026', 'February 2026', 'March 2026', 'April 2026', 'May 2026', 'June 2026', 'July 2026', 'August 2026', 'September 2026', 'October 2026', 'November 2026', 'December 2026'];
 
@@ -45,9 +51,36 @@ export default function BillingPage() {
       const exists = customers.some((c) => c.id === targetCustomerId);
       if (exists) {
         setSelectedCustomerId(targetCustomerId);
+        const cust = customers.find((c) => c.id === targetCustomerId);
+        if (cust) {
+          setSearchQuery(`${cust.name} (${cust.id})`);
+        }
       }
     }
   }, [targetCustomerId, customers]);
+
+  // Click outside to close search dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Filtered search results
+  const searchResults = useMemo(() => {
+    if (searchQuery.trim() === '') return [];
+    const term = searchQuery.toLowerCase();
+    return customers.filter(
+      (c) =>
+        c.name.toLowerCase().includes(term) ||
+        c.id.toLowerCase().includes(term) ||
+        c.phone.includes(term)
+    );
+  }, [customers, searchQuery]);
 
   // Selected customer details
   const currentCustomer = useMemo(() => {
@@ -59,9 +92,7 @@ export default function BillingPage() {
   const previousDue = currentCustomer ? currentCustomer.outstandingBalance : 0;
   
   const subtotal = monthlyCharges + previousDue + additionalCharges;
-  const taxableAmount = Math.max(0, subtotal - discount);
-  const tax = Math.round(taxableAmount * 0.15); // 15% SST
-  const grandTotal = Math.max(0, taxableAmount + tax);
+  const grandTotal = Math.max(0, subtotal - discount);
 
   const handleGenerateBill = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,7 +109,6 @@ export default function BillingPage() {
         previousDue,
         additionalCharges,
         discount,
-        tax,
         billingDate: new Date().toISOString().split('T')[0],
         dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 10 days due
       };
@@ -96,6 +126,14 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-6">
+      {isSubmitting && (
+        <LogoLoader
+          overlay
+          text="Generating Invoice..."
+          subtext="Friends Network ISP Billing System"
+          loadingText="Please wait while invoice ledger updates..."
+        />
+      )}
       {/* Header */}
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight">Billing &amp; Invoicing</h1>
@@ -132,22 +170,69 @@ export default function BillingPage() {
               </div>
 
               <form onSubmit={handleGenerateBill} className="space-y-5">
-                {/* Customer Dropdown */}
-                <div className="space-y-1.5">
+                {/* Customer Smart Search */}
+                <div ref={searchRef} className="space-y-1.5 relative">
                   <label className="text-xs font-semibold text-muted-foreground">Select Customer *</label>
-                  <select
-                    value={selectedCustomerId}
-                    onChange={(e) => setSelectedCustomerId(e.target.value)}
-                    required
-                    className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-xs outline-none transition-all focus:border-primary focus:bg-card"
-                  >
-                    <option value="">-- Choose Client --</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.id}) • {c.area}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search customer by ID, Name, or Mobile..."
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setSelectedCustomerId('');
+                        setShowSearchDropdown(true);
+                      }}
+                      onFocus={() => setShowSearchDropdown(true)}
+                      required
+                      className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-xs outline-none transition-all focus:border-primary focus:bg-card"
+                    />
+                    {selectedCustomerId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedCustomerId('');
+                          setSearchQuery('');
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  {showSearchDropdown && searchResults.length > 0 && (
+                    <div className="absolute top-16 z-50 w-full rounded-xl border border-border bg-card p-2 shadow-lg max-h-60 overflow-y-auto">
+                      {searchResults.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCustomerId(c.id);
+                            setSearchQuery(`${c.name} (${c.id})`);
+                            setShowSearchDropdown(false);
+                          }}
+                          className="flex w-full items-center justify-between rounded-lg p-2 text-left hover:bg-secondary transition-colors"
+                        >
+                          <div>
+                            <p className="text-xs font-semibold text-foreground">{c.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{c.id} • {c.phone} • {c.area}</p>
+                          </div>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                            c.connectionStatus === 'Active'
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
+                          }`}>
+                            {c.connectionStatus}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {showSearchDropdown && searchQuery.trim() !== '' && searchResults.length === 0 && (
+                    <div className="absolute top-16 z-50 w-full rounded-xl border border-border bg-card p-4 text-center shadow-lg">
+                      <p className="text-xs text-muted-foreground">No customers found matching &ldquo;{searchQuery}&rdquo;</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -214,16 +299,7 @@ export default function BillingPage() {
                     />
                   </div>
 
-                  {/* Calculated Tax */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                      <Calculator className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span>Sales Tax (15% SST)</span>
-                    </label>
-                    <div className="h-10 w-full rounded-xl border border-border bg-secondary/20 px-3.5 text-xs flex items-center font-bold text-foreground/70">
-                      PKR {tax}
-                    </div>
-                  </div>
+
                 </div>
 
                 <div className="space-y-1.5">
@@ -341,14 +417,6 @@ export default function BillingPage() {
 
                   {/* Total Calculations */}
                   <div className="space-y-1.5 text-right font-medium">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Subtotal</span>
-                      <span>PKR {subtotal}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Sindh Sales Tax (15% SST)</span>
-                      <span>PKR {tax}</span>
-                    </div>
                     <div className="flex justify-between border-t border-border pt-1.5 text-sm font-black text-foreground">
                       <span>Grand Total Due</span>
                       <span className="text-indigo-500">PKR {grandTotal}</span>

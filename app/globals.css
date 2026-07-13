@@ -47,23 +47,23 @@
   --primary: #2563eb; /* Royal Blue */
   --primary-foreground: #ffffff;
   
-  --secondary: #0ea5e9; /* Sky Blue */
+  --secondary: #3b82f6; /* Blue */
   --secondary-foreground: #ffffff;
   
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
   
-  --accent: #14b8a6; /* Teal */
+  --accent: #06b6d4; /* Cyan */
   --accent-foreground: #ffffff;
   
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   
-  --border: #f1f5f9;
-  --input: #f1f5f9;
+  --border: #e2e8f0; /* Crisp Slate Border */
+  --input: #ffffff;  /* White input bg */
   --ring: #2563eb;
   
-  --radius: 1rem; /* rounded cards */
+  --radius: 18px; /* rounded cards */
 }
 
 /* Custom Scrollbar */
@@ -82,13 +82,7 @@
   background: rgba(100, 116, 139, 0.3);
 }
 
-/* Custom styling utilities */
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-}
+/* Premium SaaS Design System Overrides */
 
 body {
   background-color: var(--background);
@@ -96,24 +90,343 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Cards styling and lift */
+.bg-card, [class*="bg-card"], .card {
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px 0 rgba(0, 0, 0, 0.02) !important;
+  border-radius: var(--radius) !important;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease !important;
+}
+
+.bg-card:not([class*="fixed"]):not([class*="absolute"]):not([class*="z-50"]):hover, 
+[class*="bg-card"]:not([class*="fixed"]):not([class*="absolute"]):not([class*="z-50"]):hover, 
+.card:hover {
+  transform: translateY(-2px);
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Sidebar layout styling */
+aside, .aside {
+  background-color: #ffffff !important;
+  border-right: 1px solid var(--border) !important;
+}
+
+/* Sidebar menu item transitions */
+aside a, .aside a {
+  border-radius: 12px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Sidebar active nav item: blue gradient background */
+aside a.bg-primary, .aside a.bg-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  box-shadow: 0 4px 12px -3px rgba(37, 99, 235, 0.2) !important;
+  color: #ffffff !important;
+}
+
+/* Sidebar inactive nav item hover: soft gray background */
+aside a:not(.bg-primary):hover, .aside a:not(.bg-primary):hover {
+  background-color: var(--muted) !important;
+  color: var(--foreground) !important;
+}
+
+header, .sticky.top-0 {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid var(--border) !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Navbar Search Bar input styling */
+header input[type="text"], .sticky.top-0 input[type="text"] {
+  border: 1px solid var(--border) !important;
+  background-color: #ffffff !important;
+  border-radius: 9999px !important; /* Fully rounded search bar */
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+header input[type="text"]:focus, .sticky.top-0 input[type="text"]:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Rounded, smooth hover buttons */
+button, a.btn, [class*="bg-primary px-"] {
+  border-radius: 12px !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Flat grey buttons (outline buttons) */
+button.border, a.btn.border, [class*="border border-border"] {
+  border-radius: 12px !important;
+  background-color: #ffffff !important;
+  border-color: var(--border) !important;
+}
+
+button.border:hover, a.btn.border:hover {
+  background-color: var(--muted) !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Tables rounded container and borders */
+.overflow-x-auto, [class*="overflow-x-auto"] {
+  border-radius: 16px !important;
+  border: 1px solid var(--border) !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02) !important;
+}
+
+table {
+  width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+table th {
+  background-color: #f8fafc !important;
+  color: var(--muted-foreground) !important;
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 12px 16px !important;
+}
+
+table td {
+  padding: 14px 16px !important;
+  border-bottom: 1px solid var(--border) !important;
+  font-size: 0.875rem !important;
+  transition: background-color 0.15s ease !important;
+}
+
+/* Row hover highlight */
+table tbody tr:hover td {
+  background-color: #f8fafc !important;
+}
+
+/* Sticky table header */
+table thead {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+}
+
+/* Inputs and Select forms styling */
+input[type="text"], input[type="number"], input[type="email"], input[type="password"], input[type="date"], select, textarea {
+  border-radius: 12px !important;
+  border: 1px solid var(--border) !important;
+  background-color: #ffffff !important;
+  padding: 10px 14px !important;
+  font-size: 0.875rem !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  outline: none !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary) !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}
+
+/* Dialog custom classes */
+[class*="fixed inset-0 bg-slate-900/60"] {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  background-color: rgba(15, 23, 42, 0.3) !important;
+}
+
+[class*="fixed inset-0 z-50"] > [class*="bg-white"] {
+  border-radius: 20px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid var(--border) !important;
+  overflow: hidden !important;
+}
+
 /* Print CSS to only print receipts and invoices cleanly */
 @media print {
-  body {
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+  
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
     background: white !important;
     color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
-  header, aside, button, nav, footer, .print-hidden {
+
+  /* Hide all UI elements not part of the document */
+  header, aside, button, nav, footer, .print-hidden, [role="navigation"], .fixed.inset-0.bg-black, [class*="backdrop"] {
     display: none !important;
   }
-  .print-visible {
+
+  /* Reset main layouts so they don't force viewport limits or clipping */
+  .flex.h-screen, .flex.flex-col, main, .mx-auto.max-w-7xl {
+    height: auto !important;
+    overflow: visible !important;
     display: block !important;
-    position: absolute;
-    left: 0;
-    top: 0;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Target the active printable modal card specifically and force it to be static and take full A4 width */
+  .fixed.inset-0.z-50, [class*="z-50"] {
+    position: static !important;
+    display: block !important;
     width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    z-index: auto !important;
+    background: transparent !important;
+  }
+
+  .print-visible, [class*="max-w-lg"], [class*="max-w-2xl"] {
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
     border: none !important;
     box-shadow: none !important;
     margin: 0 !important;
     padding: 0 !important;
+    background: white !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+/* Premium Micro-Animations System */
+
+/* Cards gentle fade-in & slide-up */
+.bg-card, [class*="bg-card"], .card {
+  will-change: transform, opacity;
+  animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Table rows slide-up & stagger */
+table tbody tr {
+  will-change: transform, opacity;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: trEntrance 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes trEntrance {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+table tbody tr:nth-child(1) { animation-delay: 0.04s; }
+table tbody tr:nth-child(2) { animation-delay: 0.08s; }
+table tbody tr:nth-child(3) { animation-delay: 0.12s; }
+table tbody tr:nth-child(4) { animation-delay: 0.16s; }
+table tbody tr:nth-child(5) { animation-delay: 0.2s; }
+
+/* Sidebar Navigation Items softly zoom/scale icon on hover */
+aside a:hover svg, .aside a:hover svg {
+  transform: scale(1.1) rotate(4deg);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+aside a svg, .aside a svg {
+  transition: transform 0.2s ease !important;
+}
+
+/* Global button scale feedback click & hover */
+button:hover:not(:disabled), a.btn:hover {
+  transform: scale(1.015);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, opacity 0.2s ease !important;
+}
+
+button:active:not(:disabled), a.btn:active {
+  transform: scale(0.985) !important;
+}
+
+button, a.btn {
+  transition: transform 0.15s ease, background-color 0.2s ease, opacity 0.2s ease !important;
+}
+
+/* Dialog scale/bounce entrance overlay */
+[class*="rounded-3xl border border-slate-200 bg-white"], [class*="max-w-lg rounded-2xl"] {
+  will-change: transform, opacity;
+  animation: modalEntrance 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes modalEntrance {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Input/select element smooth transitions */
+input, select, textarea {
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Toast notifications entrance */
+[class*="fixed bottom-"], [class*="fixed top-"] {
+  will-change: transform, opacity;
+  animation: toastEntrance 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes toastEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-delay: 0s !important;
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+    transform: none !important;
   }
 }

@@ -26,7 +26,6 @@ const customerSchema = z.object({
   area: z.string().min(2, 'Area is required'),
   packageId: z.string().min(1, 'Please select a package'),
   monthlyCharges: z.number().min(0, 'Monthly charges must be positive'),
-  installationCharges: z.number().min(0, 'Installation charges must be positive'),
   routerMac: z.string().optional(),
   onuNumber: z.string().optional(),
   connectionDate: z.string().min(10, 'Please select a valid date'),
@@ -58,7 +57,6 @@ export default function AddCustomerPage() {
       connectionStatus: 'Active',
       paymentStatus: 'Unpaid',
       monthlyCharges: 0,
-      installationCharges: 0,
       name: '',
       phone: '',
       whatsapp: '',
@@ -78,7 +76,6 @@ export default function AddCustomerPage() {
       const pkg = activePackages.find((p) => p.id === selectedPackageId);
       if (pkg) {
         setValue('monthlyCharges', pkg.monthlyCharges);
-        setValue('installationCharges', pkg.installationCharges);
       }
     }
   }, [selectedPackageId, activePackages, setValue]);
@@ -276,19 +273,7 @@ export default function AddCustomerPage() {
                   {errors.monthlyCharges && <p className="text-[10px] text-rose-500 font-medium">{errors.monthlyCharges.message}</p>}
                 </div>
 
-                {/* Installation Charges */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-muted-foreground">Installation Charges (PKR) *</label>
-                  <input
-                    type="number"
-                    placeholder="2000"
-                    {...register('installationCharges', { valueAsNumber: true })}
-                    className={`h-10 w-full rounded-xl border px-3.5 text-xs outline-none bg-secondary/20 transition-all focus:border-primary focus:bg-white ${
-                      errors.installationCharges ? 'border-rose-500' : 'border-border'
-                    }`}
-                  />
-                  {errors.installationCharges && <p className="text-[10px] text-rose-500 font-medium">{errors.installationCharges.message}</p>}
-                </div>
+
 
                 {/* Router MAC */}
                 <div className="space-y-1.5">

@@ -33,7 +33,6 @@ export default function PackagesPage() {
   const [name, setName] = useState('');
   const [speed, setSpeed] = useState('');
   const [monthlyCharges, setMonthlyCharges] = useState(0);
-  const [installationCharges, setInstallationCharges] = useState(0);
   const [status, setStatus] = useState<'Active' | 'Inactive'>('Active');
 
   const [formError, setFormError] = useState('');
@@ -51,7 +50,6 @@ export default function PackagesPage() {
     setName('');
     setSpeed('');
     setMonthlyCharges(1000);
-    setInstallationCharges(2000);
     setStatus('Active');
     setFormError('');
     setDialogOpen(true);
@@ -63,7 +61,6 @@ export default function PackagesPage() {
     setName(pkg.name);
     setSpeed(pkg.speed);
     setMonthlyCharges(pkg.monthlyCharges);
-    setInstallationCharges(pkg.installationCharges);
     setStatus(pkg.status);
     setFormError('');
     setDialogOpen(true);
@@ -77,9 +74,9 @@ export default function PackagesPage() {
     }
 
     if (dialogMode === 'add') {
-      addPackage({ name, speed, monthlyCharges, installationCharges, status });
+      addPackage({ name, speed, monthlyCharges, status });
     } else if (dialogMode === 'edit' && selectedPkg) {
-      updatePackage({ ...selectedPkg, name, speed, monthlyCharges, installationCharges, status });
+      updatePackage({ ...selectedPkg, name, speed, monthlyCharges, status });
     }
 
     setDialogOpen(false);
@@ -146,15 +143,9 @@ export default function PackagesPage() {
               </div>
 
               {/* Price Details */}
-              <div className="mt-6 border-y border-border py-4 grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Monthly Plan</span>
-                  <p className="font-black text-sm text-foreground mt-0.5">PKR {pkg.monthlyCharges}</p>
-                </div>
-                <div className="border-l border-border pl-4">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase">Setup Fee</span>
-                  <p className="font-bold text-sm text-foreground/75 mt-0.5">PKR {pkg.installationCharges}</p>
-                </div>
+              <div className="mt-6 border-y border-border py-4 text-xs text-left">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">Monthly Charges</span>
+                <p className="font-black text-base text-primary mt-0.5">PKR {pkg.monthlyCharges}</p>
               </div>
 
               {/* Card Footer Actions */}
@@ -250,31 +241,17 @@ export default function PackagesPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Monthly rate */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground">Monthly Charges *</label>
-                    <input
-                      type="number"
-                      required
-                      value={monthlyCharges || ''}
-                      onChange={(e) => setMonthlyCharges(Math.max(0, parseInt(e.target.value) || 0))}
-                      placeholder="1200"
-                      className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-xs outline-none transition-all focus:border-primary focus:bg-card"
-                    />
-                  </div>
-
-                  {/* Installation */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground">Installation charges</label>
-                    <input
-                      type="number"
-                      value={installationCharges || ''}
-                      onChange={(e) => setInstallationCharges(Math.max(0, parseInt(e.target.value) || 0))}
-                      placeholder="2500"
-                      className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-xs outline-none transition-all focus:border-primary focus:bg-card"
-                    />
-                  </div>
+                {/* Monthly rate */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Monthly Charges (PKR) *</label>
+                  <input
+                    type="number"
+                    required
+                    value={monthlyCharges || ''}
+                    onChange={(e) => setMonthlyCharges(Math.max(0, parseInt(e.target.value) || 0))}
+                    placeholder="1200"
+                    className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-xs outline-none transition-all focus:border-primary focus:bg-card"
+                  />
                 </div>
 
                 {/* Status */}

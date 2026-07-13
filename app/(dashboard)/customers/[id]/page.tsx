@@ -179,28 +179,32 @@ export default function CustomerDetailsPage() {
               <div className="flex items-center gap-3">
                 <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <div>
-                  <span className="text-muted-foreground block text-[10px] font-semibold">Mobile Phone</span>
+                  <span className="text-muted-foreground block text-[10px] font-semibold">Mobile Number</span>
                   <span className="font-medium text-foreground">{customer.phone}</span>
                 </div>
               </div>
 
-              {customer.whatsapp && (
-                <div className="flex items-center gap-3">
-                  <span className="h-4 w-4 text-emerald-500 flex-shrink-0 font-bold">W</span>
-                  <div>
-                    <span className="text-muted-foreground block text-[10px] font-semibold">WhatsApp</span>
-                    <span className="font-medium text-foreground">{customer.whatsapp}</span>
-                  </div>
+              <div className="flex items-center gap-3">
+                <span className="h-4 w-4 text-emerald-500 flex-shrink-0 font-bold">W</span>
+                <div>
+                  <span className="text-muted-foreground block text-[10px] font-semibold">WhatsApp</span>
+                  <span className="font-medium text-foreground">{customer.whatsapp || 'N/A'}</span>
                 </div>
-              )}
+              </div>
 
-
+              <div className="flex items-start gap-3">
+                <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-muted-foreground block text-[10px] font-semibold">Installation Area</span>
+                  <span className="font-medium text-foreground leading-normal">{customer.area}</span>
+                </div>
+              </div>
 
               <div className="flex items-start gap-3">
                 <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                 <div>
                   <span className="text-muted-foreground block text-[10px] font-semibold">Installation Address</span>
-                  <span className="font-medium text-foreground leading-normal">{customer.address} ({customer.area})</span>
+                  <span className="font-medium text-foreground leading-normal">{customer.address}</span>
                 </div>
               </div>
             </div>

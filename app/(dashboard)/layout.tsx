@@ -1,18 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import Navbar from '@/components/Navbar';
 import RechargeDialog from '@/components/RechargeDialog';
 import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-
+import { usePathname } from 'next/navigation';
 export default function DashboardGroupLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const pathname = usePathname();
 
   const toggleMobileSidebar = () => setMobileSidebarOpen(!mobileSidebarOpen);
   const closeMobileSidebar = () => setMobileSidebarOpen(false);
@@ -61,11 +62,19 @@ export default function DashboardGroupLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         <Navbar onMenuToggle={toggleMobileSidebar} />
         
-        {/* Scrollable page canvas */}
+        {/* Scrollable page canvas with page transitions */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-background">
-          <div className="mx-auto max-w-7xl space-y-6">
-            {children}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, scale: 0.99 }}
+              animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: 'easeInOut' } }}
+              exit={{ opacity: 0, scale: 0.99, transition: { duration: 0.15, ease: 'easeInOut' } }}
+              className="mx-auto max-w-7xl space-y-6"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
       <RechargeDialog />

@@ -111,7 +111,14 @@ export default function DashboardPage() {
       {/* Header and Welcome */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-3">
-          <img src="/friends-logo.png" alt="Friends Network Logo" className="h-12 w-12 object-contain" />
+          <motion.img 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            src="/friends-logo.png" 
+            alt="Friends Network Logo" 
+            className="h-16 w-16 object-contain" 
+          />
           <div className="text-left">
             <h1 className="text-3xl font-extrabold tracking-tight">Dashboard Overview</h1>
             <p className="text-slate-500 text-sm mt-1">

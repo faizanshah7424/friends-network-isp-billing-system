@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Network, ShieldCheck, Mail, Lock, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import LogoLoader from '@/components/ui/LogoLoader';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,6 +22,17 @@ export default function LoginPage() {
       router.push('/');
     }, 1200);
   };
+
+  if (isLoading) {
+    return (
+      <LogoLoader
+        fullscreen
+        text="Friends Network"
+        subtext="Internet Service Provider"
+        loadingText="Loading Dashboard..."
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen w-screen flex items-center justify-center bg-slate-50 text-slate-800 font-sans p-4 relative overflow-hidden">

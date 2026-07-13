@@ -323,9 +323,15 @@ export default function CustomersPage() {
               <tbody className="divide-y divide-border text-sm">
                 {paginatedCustomers.map((c) => (
                   <tr key={c.id} className="hover:bg-secondary/20 transition-all duration-150">
-                    <td className="p-4 font-semibold text-indigo-500">{c.id}</td>
+                    <td className="p-4 font-semibold text-indigo-500">
+                      <Link href={`/customers/${c.id}`} className="hover:underline hover:text-indigo-600 transition-colors">
+                        {c.id}
+                      </Link>
+                    </td>
                     <td className="p-4">
-                      <div className="font-semibold text-foreground">{c.name}</div>
+                      <Link href={`/customers/${c.id}`} className="font-semibold text-foreground hover:underline hover:text-primary transition-colors">
+                        {c.name}
+                      </Link>
                     </td>
                     <td className="p-4 text-xs font-medium max-w-[150px] truncate">{c.packageName}</td>
                     <td className="p-4 text-right font-bold">PKR {c.monthlyCharges}</td>

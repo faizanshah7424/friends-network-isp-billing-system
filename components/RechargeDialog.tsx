@@ -19,6 +19,7 @@ import {
   Coins,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import LogoLoader from '@/components/ui/LogoLoader';
 
 export default function RechargeDialog() {
   const {
@@ -50,6 +51,7 @@ export default function RechargeDialog() {
   const [step, setStep] = useState<'form' | 'receipt'>('form');
   const [recentReceipt, setRecentReceipt] = useState<Payment | null>(null);
   const [invoicePreview, setInvoicePreview] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sync customer package when dialog opens
   useEffect(() => {
@@ -71,9 +73,7 @@ export default function RechargeDialog() {
   const previousDue = customer ? customer.outstandingBalance : 0;
   
   const subtotal = packagePrice + previousDue + additionalCharges;
-  const taxableAmount = Math.max(0, subtotal - discount);
-  const tax = Math.round(taxableAmount * 0.15); // 15% SST
-  const grandTotal = Math.max(0, taxableAmount + tax);
+  const grandTotal = Math.max(0, subtotal - discount);
 
   // Next Expiry calculation (30 days from today)
   const nextExpiryDate = useMemo(() => {
@@ -91,6 +91,7 @@ export default function RechargeDialog() {
 
   const handleReceivePayment = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     const paymentData = {
       customerId: customer.id,
@@ -107,12 +108,15 @@ export default function RechargeDialog() {
       notes: remarks || undefined,
     };
 
-    // Clears the payment in context ledger
-    const { payment } = addPayment(paymentData);
-    
-    // Set the details to render receipt
-    setRecentReceipt(payment);
-    setStep('receipt');
+    setTimeout(() => {
+      // Clears the payment in context ledger
+      const { payment } = addPayment(paymentData);
+      
+      // Set the details to render receipt
+      setRecentReceipt(payment);
+      setStep('receipt');
+      setIsSubmitting(false);
+    }, 1200);
   };
 
   const handlePrint = () => {
@@ -122,6 +126,14 @@ export default function RechargeDialog() {
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto print:static print:h-auto print:w-auto">
+        {isSubmitting && (
+          <LogoLoader
+            overlay
+            text="Recharging Account..."
+            subtext="Friends Network ISP Billing System"
+            loadingText="Processing invoice settlement and generating receipt voucher..."
+          />
+        )}
         {/* Blurred Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -378,10 +390,6 @@ export default function RechargeDialog() {
                         <span className="font-semibold">-PKR {discount}</span>
                       </div>
                     )}
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Sales Tax (15% SST)</span>
-                      <span className="font-semibold text-slate-700">PKR {tax}</span>
-                    </div>
                     <div className="flex justify-between border-t border-slate-100 pt-2 text-sm font-black text-slate-800">
                       <span>Grand Total Amount</span>
                       <span className="text-blue-600">PKR {grandTotal}</span>

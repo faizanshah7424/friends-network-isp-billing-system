@@ -60,7 +60,8 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      <div className="space-y-6 print:hidden">
+        {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Billing Invoices</h1>
@@ -160,6 +161,7 @@ export default function InvoicesPage() {
             </p>
           </div>
         )}
+      </div>
       </div>
 
       {/* Invoice Detail Modal */}
@@ -262,11 +264,7 @@ export default function InvoicesPage() {
                     </div>
                   )}
 
-                  {/* Tax */}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Sindh Sales Tax on ISP Services (15% SST)</span>
-                    <span className="font-semibold text-foreground">PKR {selectedInvoice.tax}</span>
-                  </div>
+                  {/* Tax removed */}
                 </div>
 
                 {/* Invoice Reconciliation Ledger */}

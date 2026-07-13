@@ -26,7 +26,6 @@ export interface Customer {
   packageId: string;
   packageName: string;
   monthlyCharges: number;
-  installationCharges: number;
   routerMac?: string;
   onuNumber?: string;
   connectionDate: string;
@@ -42,7 +41,6 @@ export interface Package {
   name: string; // Basic, Bronze, Silver
   speed: string; // e.g., "15 Mbps", "35 Mbps"
   monthlyCharges: number;
-  installationCharges: number;
   status: ConnectionStatus;
 }
 
@@ -55,7 +53,6 @@ export interface Invoice {
   previousDue: number;
   additionalCharges: number;
   discount: number;
-  tax: number;
   grandTotal: number;
   amountPaid: number;
   outstandingBalance: number;

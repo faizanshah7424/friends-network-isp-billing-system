@@ -11,7 +11,7 @@ import {
   initialComplaints,
   initialNotifications,
   defaultSettings,
-} from '@/data/dummyData';
+} from '@/data/customerDb';
 
 interface BillingSystemContextType {
   customers: Customer[];
@@ -71,6 +71,17 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (typeof window !== 'undefined') {
+      const dbImported = localStorage.getItem('fnb_db_imported_v3');
+      if (!dbImported) {
+        localStorage.removeItem('fnb_customers');
+        localStorage.removeItem('fnb_packages');
+        localStorage.removeItem('fnb_invoices');
+        localStorage.removeItem('fnb_payments');
+        localStorage.removeItem('fnb_complaints');
+        localStorage.removeItem('fnb_notifications');
+        localStorage.setItem('fnb_db_imported_v3', 'true');
+      }
+
       const storedCustomers = localStorage.getItem('fnb_customers');
       const storedPackages = localStorage.getItem('fnb_packages');
       const storedInvoices = localStorage.getItem('fnb_invoices');
@@ -81,13 +92,13 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
       const storedUser = localStorage.getItem('fnb_current_user');
 
       setTimeout(() => {
-        setCustomers(storedCustomers ? JSON.parse(storedCustomers) : initialCustomers);
-        setPackages(storedPackages ? JSON.parse(storedPackages) : initialPackages);
-        setInvoices(storedInvoices ? JSON.parse(storedInvoices) : initialInvoices);
-        setPayments(storedPayments ? JSON.parse(storedPayments) : initialPayments);
-        setComplaints(storedComplaints ? JSON.parse(storedComplaints) : initialComplaints);
-        setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
-        setSettings(storedSettings ? JSON.parse(storedSettings) : defaultSettings);
+        setCustomers(storedCustomers && dbImported ? JSON.parse(storedCustomers) : initialCustomers);
+        setPackages(storedPackages && dbImported ? JSON.parse(storedPackages) : initialPackages);
+        setInvoices(storedInvoices && dbImported ? JSON.parse(storedInvoices) : initialInvoices);
+        setPayments(storedPayments && dbImported ? JSON.parse(storedPayments) : initialPayments);
+        setComplaints(storedComplaints && dbImported ? JSON.parse(storedComplaints) : initialComplaints);
+        setNotifications(storedNotifications && dbImported ? JSON.parse(storedNotifications) : initialNotifications);
+        setSettings(storedSettings && dbImported ? JSON.parse(storedSettings) : defaultSettings);
         
         if (storedUser) {
           try {

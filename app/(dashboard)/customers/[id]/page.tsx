@@ -41,6 +41,7 @@ export default function CustomerDetailsPage() {
     activateCustomer,
     openRecharge,
     currentUser,
+    packages,
   } = useBillingSystem();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'billing' | 'notes'>('overview');
@@ -50,6 +51,12 @@ export default function CustomerDetailsPage() {
   const customer = useMemo(() => {
     return customers.find((c) => c.id === id);
   }, [customers, id]);
+
+  // Find customer's package details
+  const customerPkg = useMemo(() => {
+    if (!customer) return null;
+    return packages.find((p) => p.id === customer.packageId || p.name === customer.packageName) || null;
+  }, [packages, customer]);
 
   // Find related invoices
   const customerInvoices = useMemo(() => {
@@ -240,6 +247,14 @@ export default function CustomerDetailsPage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Service Plan</span>
                 <span className="font-semibold text-foreground text-right max-w-[150px] truncate">{customer.packageName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Package Category</span>
+                <span className="font-semibold text-foreground">{customerPkg ? customerPkg.category : 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Internet Speed</span>
+                <span className="font-semibold text-foreground">{customerPkg ? customerPkg.speed : 'N/A'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Monthly Charges</span>

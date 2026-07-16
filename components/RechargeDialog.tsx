@@ -187,11 +187,27 @@ export default function RechargeDialog() {
                       onChange={(e) => setSelectedPkgId(e.target.value)}
                       className="w-full text-sm font-bold bg-white border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-primary"
                     >
-                      {packages.map((pkg) => (
-                        <option key={pkg.id} value={pkg.id}>
-                          {pkg.name} ({pkg.speed})
-                        </option>
-                      ))}
+                      <optgroup label="Social Media Packages">
+                        {packages.filter((p) => p.category === 'Social Media').map((pkg) => (
+                          <option key={pkg.id} value={pkg.id}>
+                            {pkg.name} ({pkg.speed})
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Standard Packages">
+                        {packages.filter((p) => p.category === 'Standard').map((pkg) => (
+                          <option key={pkg.id} value={pkg.id}>
+                            {pkg.name} ({pkg.speed})
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Static IP Packages">
+                        {packages.filter((p) => p.category === 'Static IP').map((pkg) => (
+                          <option key={pkg.id} value={pkg.id}>
+                            {pkg.name} ({pkg.speed})
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
 
                     <div className="grid grid-cols-2 gap-2 text-xs border-t border-slate-100 pt-3">

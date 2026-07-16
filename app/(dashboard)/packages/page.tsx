@@ -31,9 +31,11 @@ export default function PackagesPage() {
 
   // Form Fields
   const [name, setName] = useState('');
+  const [category, setCategory] = useState<'Social Media' | 'Standard' | 'Static IP'>('Standard');
   const [speed, setSpeed] = useState('');
   const [monthlyCharges, setMonthlyCharges] = useState(0);
   const [status, setStatus] = useState<'Active' | 'Inactive'>('Active');
+  const [description, setDescription] = useState('');
 
   const [formError, setFormError] = useState('');
 
@@ -48,9 +50,11 @@ export default function PackagesPage() {
   const handleOpenAdd = () => {
     setDialogMode('add');
     setName('');
+    setCategory('Standard');
     setSpeed('');
     setMonthlyCharges(1000);
     setStatus('Active');
+    setDescription('');
     setFormError('');
     setDialogOpen(true);
   };
@@ -59,9 +63,11 @@ export default function PackagesPage() {
     setSelectedPkg(pkg);
     setDialogMode('edit');
     setName(pkg.name);
+    setCategory(pkg.category || 'Standard');
     setSpeed(pkg.speed);
     setMonthlyCharges(pkg.monthlyCharges);
     setStatus(pkg.status);
+    setDescription(pkg.description || '');
     setFormError('');
     setDialogOpen(true);
   };
@@ -74,9 +80,9 @@ export default function PackagesPage() {
     }
 
     if (dialogMode === 'add') {
-      addPackage({ name, speed, monthlyCharges, status });
+      addPackage({ name, category, speed, monthlyCharges, status, description });
     } else if (dialogMode === 'edit' && selectedPkg) {
-      updatePackage({ ...selectedPkg, name, speed, monthlyCharges, status });
+      updatePackage({ ...selectedPkg, name, category, speed, monthlyCharges, status, description });
     }
 
     setDialogOpen(false);
@@ -137,8 +143,14 @@ export default function PackagesPage() {
                 </div>
 
                 <div>
+                  <span className="text-[9px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 rounded-md mb-2 inline-block">
+                    {pkg.category}
+                  </span>
                   <h3 className="font-extrabold text-base leading-snug">{pkg.name}</h3>
                   <p className="text-xs text-muted-foreground mt-0.5 font-medium">Speed: {pkg.speed}</p>
+                  {pkg.description && (
+                    <p className="text-[11px] text-slate-400 italic mt-1">{pkg.description}</p>
+                  )}
                 </div>
               </div>
 
@@ -228,6 +240,20 @@ export default function PackagesPage() {
                   />
                 </div>
 
+                {/* Category */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Package Category *</label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value as any)}
+                    className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-xs outline-none transition-all focus:border-primary focus:bg-card"
+                  >
+                    <option value="Standard">Standard Packages</option>
+                    <option value="Social Media">Social Media Packages</option>
+                    <option value="Static IP">Static IP Packages</option>
+                  </select>
+                </div>
+
                 {/* Speed */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-muted-foreground">Bandwidth Speed *</label>
@@ -250,6 +276,18 @@ export default function PackagesPage() {
                     value={monthlyCharges || ''}
                     onChange={(e) => setMonthlyCharges(Math.max(0, parseInt(e.target.value) || 0))}
                     placeholder="1200"
+                    className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-xs outline-none transition-all focus:border-primary focus:bg-card"
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Description (Optional)</label>
+                  <input
+                    type="text"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="e.g. Social Media optimized plan"
                     className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-xs outline-none transition-all focus:border-primary focus:bg-card"
                   />
                 </div>

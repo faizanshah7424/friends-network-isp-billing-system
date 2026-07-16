@@ -1005,11 +1005,27 @@ export default function BulkActionsPage() {
                         required
                         className="h-10 w-full rounded-xl border border-border bg-card px-3 text-xs outline-none focus:border-primary"
                       >
-                        {packages.map((pkg) => (
-                          <option key={pkg.id} value={pkg.id}>
-                            {pkg.name} ({pkg.speed}) - PKR {pkg.monthlyCharges}/mo
-                          </option>
-                        ))}
+                        <optgroup label="Social Media Packages">
+                          {packages.filter((p) => p.category === 'Social Media').map((pkg) => (
+                            <option key={pkg.id} value={pkg.id}>
+                              {pkg.name} ({pkg.speed}) - PKR {pkg.monthlyCharges}/mo
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Standard Packages">
+                          {packages.filter((p) => p.category === 'Standard').map((pkg) => (
+                            <option key={pkg.id} value={pkg.id}>
+                              {pkg.name} ({pkg.speed}) - PKR {pkg.monthlyCharges}/mo
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Static IP Packages">
+                          {packages.filter((p) => p.category === 'Static IP').map((pkg) => (
+                            <option key={pkg.id} value={pkg.id}>
+                              {pkg.name} ({pkg.speed}) - PKR {pkg.monthlyCharges}/mo
+                            </option>
+                          ))}
+                        </optgroup>
                       </select>
                     </div>
                     <p className="text-[11px] text-muted-foreground leading-normal">

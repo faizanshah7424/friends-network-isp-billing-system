@@ -266,11 +266,27 @@ export default function AddCustomerPage() {
                     }`}
                   >
                     <option value="">Select Package</option>
-                    {activePackages.map((pkg) => (
-                      <option key={pkg.id} value={pkg.id}>
-                        {pkg.name} (PKR {pkg.monthlyCharges}/mo)
-                      </option>
-                    ))}
+                    <optgroup label="Social Media Packages">
+                      {activePackages.filter((p) => p.category === 'Social Media').map((pkg) => (
+                        <option key={pkg.id} value={pkg.id}>
+                          {pkg.name} — {pkg.speed} (PKR {pkg.monthlyCharges}/mo)
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Standard Packages">
+                      {activePackages.filter((p) => p.category === 'Standard').map((pkg) => (
+                        <option key={pkg.id} value={pkg.id}>
+                          {pkg.name} — {pkg.speed} (PKR {pkg.monthlyCharges}/mo)
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Static IP Packages">
+                      {activePackages.filter((p) => p.category === 'Static IP').map((pkg) => (
+                        <option key={pkg.id} value={pkg.id}>
+                          {pkg.name} — {pkg.speed} (PKR {pkg.monthlyCharges}/mo)
+                        </option>
+                      ))}
+                    </optgroup>
                   </select>
                   {errors.packageId && <p className="text-[10px] text-rose-500 font-medium">{errors.packageId.message}</p>}
                 </div>

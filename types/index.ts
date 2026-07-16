@@ -39,10 +39,12 @@ export interface Customer {
 
 export interface Package {
   id: string;
-  name: string; // Basic, Bronze, Silver
-  speed: string; // e.g., "15 Mbps", "35 Mbps"
+  name: string;
+  category: 'Social Media' | 'Standard' | 'Static IP';
+  speed: string;
   monthlyCharges: number;
   status: ConnectionStatus;
+  description?: string;
 }
 
 export interface Invoice {

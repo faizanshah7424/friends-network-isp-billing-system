@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useBillingSystem } from '@/lib/context';
 import { Customer, Payment, Complaint, Invoice, Package } from '@/types';
 import StatusBadge from '@/components/StatusBadge';
@@ -66,10 +66,16 @@ export default function ReportsPage() {
   const [startDate, setStartDate] = useState('2026-07-01');
   const [endDate, setEndDate] = useState('2026-07-31');
   const [areaFilter, setAreaFilter] = useState('All');
+  const [categoryFilter, setCategoryFilter] = useState('All');
   const [packageFilter, setPackageFilter] = useState('All');
   const [connectionStatusFilter, setConnectionStatusFilter] = useState('All');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('All');
   const [recoveryStatusFilter, setRecoveryStatusFilter] = useState('All');
+
+  // Reset package name filter when category changes
+  useEffect(() => {
+    setPackageFilter('All');
+  }, [categoryFilter]);
 
   // Loading indicator for export simulation
   const [isExporting, setIsExporting] = useState(false);
@@ -81,8 +87,13 @@ export default function ReportsPage() {
   }, [customers]);
 
   const uniquePackages = useMemo(() => {
-    return ['All', ...Array.from(new Set(customers.map((c) => c.packageName)))];
-  }, [customers]);
+    let filteredPkgs = packages;
+    if (categoryFilter !== 'All') {
+      filteredPkgs = packages.filter((p) => p.category === categoryFilter);
+    }
+    const names = Array.from(new Set(filteredPkgs.map((p) => p.name)));
+    return ['All', ...names];
+  }, [packages, categoryFilter]);
 
   // Helper: Date parser check
   const isWithinDateRange = (dateString: string) => {
@@ -137,6 +148,12 @@ export default function ReportsPage() {
     if (areaFilter !== 'All') {
       clientResult = clientResult.filter(c => c.area === areaFilter);
     }
+    if (categoryFilter !== 'All') {
+      clientResult = clientResult.filter(c => {
+        const pkg = packages.find(p => p.id === c.packageId || p.name === c.packageName);
+        return pkg?.category === categoryFilter;
+      });
+    }
     if (packageFilter !== 'All') {
       clientResult = clientResult.filter(c => c.packageName === packageFilter);
     }
@@ -162,6 +179,10 @@ export default function ReportsPage() {
     paymentResult = paymentResult.filter(p => {
       const cust = customers.find(c => c.id === p.customerId);
       if (areaFilter !== 'All' && cust?.area !== areaFilter) return false;
+      if (categoryFilter !== 'All') {
+        const pkg = packages.find(pkgObj => pkgObj.id === cust?.packageId || pkgObj.name === cust?.packageName);
+        if (pkg?.category !== categoryFilter) return false;
+      }
       if (packageFilter !== 'All' && cust?.packageName !== packageFilter) return false;
       return isWithinDateRange(p.paymentDate);
     });
@@ -171,6 +192,10 @@ export default function ReportsPage() {
     complaintResult = complaintResult.filter(comp => {
       const cust = customers.find(c => c.id === comp.customerId);
       if (areaFilter !== 'All' && cust?.area !== areaFilter) return false;
+      if (categoryFilter !== 'All') {
+        const pkg = packages.find(pkgObj => pkgObj.id === cust?.packageId || pkgObj.name === cust?.packageName);
+        if (pkg?.category !== categoryFilter) return false;
+      }
       if (packageFilter !== 'All' && cust?.packageName !== packageFilter) return false;
       return isWithinDateRange(comp.dateCreated);
     });
@@ -180,7 +205,7 @@ export default function ReportsPage() {
       payments: paymentResult,
       complaints: complaintResult,
     };
-  }, [customers, payments, complaints, dateFilter, startDate, endDate, areaFilter, packageFilter, connectionStatusFilter, paymentStatusFilter, recoveryStatusFilter]);
+  }, [customers, payments, complaints, dateFilter, startDate, endDate, areaFilter, categoryFilter, packageFilter, connectionStatusFilter, paymentStatusFilter, recoveryStatusFilter, packages]);
 
   // Export report handler
   const handleExport = (format: 'PDF' | 'Excel' | 'CSV') => {
@@ -412,6 +437,21 @@ export default function ReportsPage() {
                     {area === 'All' ? 'All Areas' : area}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            {/* Package Category Filter */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground">Package Category</label>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="h-9.5 w-full rounded-xl border border-border bg-secondary/30 px-3 text-xs outline-none transition-all focus:border-primary focus:bg-card"
+              >
+                <option value="All">All Categories</option>
+                <option value="Social Media">Social Media Packages</option>
+                <option value="Standard">Standard Packages</option>
+                <option value="Static IP">Static IP Packages</option>
               </select>
             </div>
 

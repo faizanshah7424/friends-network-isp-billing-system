@@ -302,10 +302,15 @@ export default function DashboardPage() {
                 .map((c) => (
                   <div key={c.id} className="p-3.5 rounded-xl border border-border hover:bg-secondary/30 transition-colors flex justify-between items-start">
                     <div className="min-w-0 flex-1">
-                      <Link href={`/customers/${c.id}`} className="text-xs font-bold text-foreground hover:underline hover:text-primary transition-colors block truncate">
+                      <span className="text-xs font-bold text-foreground block truncate">
                         {c.name}
-                      </Link>
-                      <p className="text-[10px] text-muted-foreground mt-0.5 font-mono truncate">{c.id} • {c.phone}</p>
+                      </span>
+                      <p className="text-[10px] text-muted-foreground mt-0.5 font-mono truncate">
+                        <Link href={`/customers/${c.id}`} className="text-indigo-500 hover:underline">
+                          {c.id}
+                        </Link>{' '}
+                        • {c.phone}
+                      </p>
                       <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1 truncate">
                         <MapPin className="h-3 w-3" />
                         <span>{c.address}</span>
@@ -528,10 +533,15 @@ export default function DashboardPage() {
                   {recentPayments.map((p) => (
                     <div key={p.id} className="flex justify-between items-center p-3 rounded-xl border border-border hover:bg-secondary/40 transition-colors">
                       <div>
-                        <Link href={`/customers/${p.customerId}`} className="text-xs font-semibold text-foreground hover:underline hover:text-primary transition-colors block">
+                        <span className="text-xs font-semibold text-foreground block">
                           {p.customerName}
-                        </Link>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{p.paymentMethod} • Ref: {p.referenceNumber || 'N/A'}</p>
+                        </span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          <Link href={`/customers/${p.customerId}`} className="text-indigo-500 hover:underline font-semibold font-mono">
+                            {p.customerId}
+                          </Link>{' '}
+                          • {p.paymentMethod} • Ref: {p.referenceNumber || 'N/A'}
+                        </p>
                       </div>
                       <span className="text-xs font-bold text-emerald-500">+PKR {p.amountReceived}</span>
                     </div>
@@ -549,10 +559,15 @@ export default function DashboardPage() {
                   {newCustomers.map((c) => (
                     <div key={c.id} className="flex justify-between items-center p-3 rounded-xl border border-border hover:bg-secondary/40 transition-colors">
                       <div>
-                        <Link href={`/customers/${c.id}`} className="text-xs font-semibold text-foreground hover:underline hover:text-primary transition-colors block">
+                        <span className="text-xs font-semibold text-foreground block">
                           {c.name}
-                        </Link>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{c.id} • {c.area}</p>
+                        </span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          <Link href={`/customers/${c.id}`} className="text-indigo-500 hover:underline font-semibold font-mono">
+                            {c.id}
+                          </Link>{' '}
+                          • {c.area}
+                        </p>
                       </div>
                       <StatusBadge status={c.connectionStatus} />
                     </div>
@@ -584,7 +599,7 @@ export default function DashboardPage() {
                 <div className="flex-1">
                   <div className="flex justify-between items-center">
                     <p className="text-xs font-bold text-foreground">
-                      {act.title} — <Link href={`/customers/${act.customerId}`} className="text-indigo-500 hover:underline font-semibold">{act.customerName} ({act.customerId})</Link>
+                      {act.title} — {act.customerName} (<Link href={`/customers/${act.customerId}`} className="text-indigo-500 hover:underline font-semibold font-mono">{act.customerId}</Link>)
                     </p>
                     <span className="text-[10px] text-muted-foreground">{act.date}</span>
                   </div>

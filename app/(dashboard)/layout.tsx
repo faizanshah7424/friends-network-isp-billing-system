@@ -6,21 +6,29 @@ import Navbar from '@/components/Navbar';
 import RechargeDialog from '@/components/RechargeDialog';
 import { X, ShieldAlert, ArrowLeft } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useBillingSystem } from '@/lib/context';
 import Link from 'next/link';
+import LogoLoader from '@/components/ui/LogoLoader';
 
 export default function DashboardGroupLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const pathname = usePathname();
-  const { currentUser } = useBillingSystem();
+  const { currentUser, isAuthenticated, isLoaded } = useBillingSystem();
 
   const toggleMobileSidebar = () => setMobileSidebarOpen(!mobileSidebarOpen);
   const closeMobileSidebar = () => setMobileSidebarOpen(false);
+
+  useEffect(() => {
+    if (isLoaded && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isLoaded, isAuthenticated, router]);
 
   const isRestricted = currentUser.role === 'Sub Admin' && [
     '/billing',
@@ -31,6 +39,18 @@ export default function DashboardGroupLayout({
     '/balance-sheet',
     '/settings'
   ].some(p => pathname.startsWith(p));
+
+  if (!isLoaded || !isAuthenticated) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-card">
+        <LogoLoader
+          overlay
+          text="Friends Network"
+          subtext="Securing session..."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground">

@@ -289,6 +289,8 @@ export default function BulkActionsPage() {
       const paymentsData = selectedIds.map((id) => {
         const cust = customers.find((c) => c.id === id)!;
         const amount = paymentAmounts[id] !== undefined ? paymentAmounts[id] : (cust.outstandingBalance > 0 ? cust.outstandingBalance : cust.monthlyCharges);
+        const defaultAmount = cust.outstandingBalance > 0 ? cust.outstandingBalance : cust.monthlyCharges;
+        const isCustom = amount !== defaultAmount;
         return {
           customerId: cust.id,
           customerName: cust.name,
@@ -298,6 +300,9 @@ export default function BulkActionsPage() {
           paymentDate: `${paymentDate} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
           billingMonth: new Date().toLocaleString('default', { month: 'long', year: 'numeric' }),
           notes: remarks || undefined,
+          paymentType: (isCustom ? 'custom' : 'package') as 'package' | 'custom',
+          customReason: isCustom ? 'Partial Payment' as const : undefined,
+          packagePrice: cust.monthlyCharges,
         };
       });
 

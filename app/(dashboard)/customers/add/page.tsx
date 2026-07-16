@@ -15,10 +15,8 @@ import {
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Mobile pattern: 03XX-XXXXXXX or simple digits
-const phoneRegex = /^(03\d{2}-\d{7})|(\d{11})$/;
-
 const customerSchema = z.object({
+  id: z.string().min(3, 'Customer ID must be at least 3 characters').regex(/^[A-Za-z0-9-]+$/, 'Only letters, numbers, and hyphens are allowed'),
   name: z.string().min(3, 'Name must be at least 3 characters'),
   phone: z.string().min(11, 'Phone must be at least 11 digits'),
   whatsapp: z.string().optional(),
@@ -26,6 +24,7 @@ const customerSchema = z.object({
   area: z.string().min(2, 'Area is required'),
   packageId: z.string().min(1, 'Please select a package'),
   monthlyCharges: z.number().min(0, 'Monthly charges must be positive'),
+  installationCharges: z.number().min(0, 'Installation charges must be positive'),
   routerMac: z.string().optional(),
   onuNumber: z.string().optional(),
   connectionDate: z.string().min(10, 'Please select a valid date'),
@@ -37,7 +36,7 @@ type CustomerFormValues = z.infer<typeof customerSchema>;
 
 export default function AddCustomerPage() {
   const router = useRouter();
-  const { packages, addCustomer } = useBillingSystem();
+  const { packages, addCustomer, customers } = useBillingSystem();
   
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [showSuccess, setShowSuccess] = React.useState(false);
@@ -49,6 +48,7 @@ export default function AddCustomerPage() {
     handleSubmit,
     watch,
     setValue,
+    setError,
     formState: { errors },
   } = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
@@ -57,6 +57,8 @@ export default function AddCustomerPage() {
       connectionStatus: 'Active',
       paymentStatus: 'Unpaid',
       monthlyCharges: 0,
+      installationCharges: 0,
+      id: '',
       name: '',
       phone: '',
       whatsapp: '',
@@ -81,11 +83,26 @@ export default function AddCustomerPage() {
   }, [selectedPackageId, activePackages, setValue]);
 
   const onSubmit = (data: CustomerFormValues) => {
+    // Validate unique Customer ID
+    const duplicate = customers.some(
+      (c) => c.id.trim().toLowerCase() === data.id.trim().toLowerCase()
+    );
+    if (duplicate) {
+      setError('id', {
+        type: 'manual',
+        message: 'Customer ID already exists in the system',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
     // Simulate API delay
     setTimeout(() => {
-      addCustomer(data);
+      addCustomer({
+        ...data,
+        id: data.id.trim(),
+      });
       setIsSubmitting(false);
       setShowSuccess(true);
       
@@ -148,6 +165,20 @@ export default function AddCustomerPage() {
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
+                {/* Customer ID */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Customer ID *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. FN-1001"
+                    {...register('id')}
+                    className={`h-10 w-full rounded-xl border px-3.5 text-xs outline-none bg-secondary/20 transition-all focus:border-primary focus:bg-white ${
+                      errors.id ? 'border-rose-500' : 'border-border'
+                    }`}
+                  />
+                  {errors.id && <p className="text-[10px] text-rose-500 font-medium">{errors.id.message}</p>}
+                </div>
+
                 {/* Name */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-muted-foreground">Customer Name *</label>
@@ -167,7 +198,7 @@ export default function AddCustomerPage() {
                   <label className="text-xs font-semibold text-muted-foreground">Mobile Number *</label>
                   <input
                     type="text"
-                    placeholder="e.g. 0300-1234567"
+                    placeholder="e.g. 03001234567"
                     {...register('phone')}
                     className={`h-10 w-full rounded-xl border px-3.5 text-xs outline-none bg-secondary/20 transition-all focus:border-primary focus:bg-white ${
                       errors.phone ? 'border-rose-500' : 'border-border'
@@ -181,7 +212,7 @@ export default function AddCustomerPage() {
                   <label className="text-xs font-semibold text-muted-foreground">WhatsApp Number (Optional)</label>
                   <input
                     type="text"
-                    placeholder="e.g. 0300-1234567"
+                    placeholder="e.g. 03001234567"
                     {...register('whatsapp')}
                     className="h-10 w-full rounded-xl border border-border px-3.5 text-xs outline-none bg-secondary/20 transition-all focus:border-primary focus:bg-white"
                   />
@@ -201,10 +232,8 @@ export default function AddCustomerPage() {
                   {errors.area && <p className="text-[10px] text-rose-500 font-medium">{errors.area.message}</p>}
                 </div>
 
-
-
                 {/* Address */}
-                <div className="space-y-1.5 md:col-span-2">
+                <div className="space-y-1.5 md:col-span-2 border-t border-border/20 pt-4">
                   <label className="text-xs font-semibold text-muted-foreground">Installation Address *</label>
                   <textarea
                     rows={3}
@@ -273,7 +302,19 @@ export default function AddCustomerPage() {
                   {errors.monthlyCharges && <p className="text-[10px] text-rose-500 font-medium">{errors.monthlyCharges.message}</p>}
                 </div>
 
-
+                {/* Installation Charges */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Installation Charges (PKR)</label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    {...register('installationCharges', { valueAsNumber: true })}
+                    className={`h-10 w-full rounded-xl border px-3.5 text-xs outline-none bg-secondary/20 transition-all focus:border-primary focus:bg-white ${
+                      errors.installationCharges ? 'border-rose-500' : 'border-border'
+                    }`}
+                  />
+                  {errors.installationCharges && <p className="text-[10px] text-rose-500 font-medium">{errors.installationCharges.message}</p>}
+                </div>
 
                 {/* Router MAC */}
                 <div className="space-y-1.5">

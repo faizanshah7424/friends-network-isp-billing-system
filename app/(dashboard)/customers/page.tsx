@@ -346,61 +346,63 @@ export default function CustomersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border text-sm">
-                  {paginatedCustomers.map((c) => (
-                    <motion.tr 
-                      key={c.id} 
-                      className="hover:bg-secondary/15 transition-all duration-200"
-                      whileHover={{ y: -0.5 }}
-                    >
-                      <td className="p-4 font-semibold text-indigo-500">
-                        <Link href={`/customers/${c.id}`} className="hover:underline hover:text-indigo-600 transition-colors">
-                          {c.id}
-                        </Link>
-                      </td>
-                      <td className="p-4">
-                        <Link href={`/customers/${c.id}`} className="font-semibold text-foreground hover:underline hover:text-primary transition-colors">
+                  {paginatedCustomers.map((c, idx) => {
+                    const isNearBottom = idx >= paginatedCustomers.length - 3 && paginatedCustomers.length > 3;
+                    return (
+                      <motion.tr 
+                        key={c.id} 
+                        className="hover:bg-secondary/15 transition-all duration-200"
+                        whileHover={{ y: -0.5 }}
+                      >
+                        <td className="p-4 font-semibold text-indigo-500">
+                          <Link href={`/customers/${c.id}`} className="hover:underline hover:text-indigo-600 transition-colors">
+                            {c.id}
+                          </Link>
+                        </td>
+                        <td className="p-4 font-semibold text-slate-800 dark:text-slate-200">
                           {c.name}
-                        </Link>
-                      </td>
-                      <td className="p-4 text-xs font-medium max-w-[150px] truncate">{c.packageName}</td>
-                      <td className="p-4 text-right font-bold text-slate-700 dark:text-slate-300">PKR {c.monthlyCharges}</td>
-                      <td className="p-4">
-                        <div className="text-xs font-semibold text-foreground">{c.phone}</div>
-                        <div className="text-[11px] text-muted-foreground truncate max-w-[160px]">{c.address}</div>
-                      </td>
-                      <td className="p-4 text-xs text-muted-foreground">{c.connectionDate}</td>
-                      <td className="p-4">
-                        <StatusBadge status={c.paymentStatus} />
-                      </td>
-                      <td className="p-4">
-                        <StatusBadge status={c.connectionStatus} />
-                      </td>
-                      <td className="p-4 relative text-center">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveMenuRowId(activeMenuRowId === c.id ? null : c.id);
-                          }}
-                          className="mx-auto h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-border dark:hover:bg-secondary text-xs font-semibold flex items-center justify-center gap-1 transition-all hover:scale-105 active:scale-95"
-                        >
-                          <span>Actions</span>
-                          <span className="text-[9px] text-slate-400">▼</span>
-                        </button>
+                        </td>
+                        <td className="p-4 text-xs font-medium max-w-[150px] truncate">{c.packageName}</td>
+                        <td className="p-4 text-right font-bold text-slate-700 dark:text-slate-300">PKR {c.monthlyCharges}</td>
+                        <td className="p-4">
+                          <div className="text-xs font-semibold text-foreground">{c.phone}</div>
+                          <div className="text-[11px] text-muted-foreground truncate max-w-[160px]">{c.address}</div>
+                        </td>
+                        <td className="p-4 text-xs text-muted-foreground">{c.connectionDate}</td>
+                        <td className="p-4">
+                          <StatusBadge status={c.paymentStatus} />
+                        </td>
+                        <td className="p-4">
+                          <StatusBadge status={c.connectionStatus} />
+                        </td>
+                        <td className="p-4 relative text-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuRowId(activeMenuRowId === c.id ? null : c.id);
+                            }}
+                            className="mx-auto h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-border dark:hover:bg-secondary text-xs font-semibold flex items-center justify-center gap-1 transition-all hover:scale-105 active:scale-95"
+                          >
+                            <span>Actions</span>
+                            <span className="text-[9px] text-slate-400">▼</span>
+                          </button>
 
-                        <AnimatePresence>
-                          {activeMenuRowId === c.id && (
-                            <>
-                              {/* Close menu overlay */}
-                              <div className="fixed inset-0 z-30" onClick={() => setActiveMenuRowId(null)} />
-                              
-                              {/* Dropdown Card */}
-                              <motion.div 
-                                initial={{ opacity: 0, scale: 0.95, y: -8 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: -8 }}
-                                transition={{ duration: 0.15, ease: 'easeOut' }}
-                                className="absolute right-4 mt-1 z-40 w-44 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card p-1 shadow-lg text-left"
-                              >
+                          <AnimatePresence>
+                            {activeMenuRowId === c.id && (
+                              <>
+                                {/* Close menu overlay */}
+                                <div className="fixed inset-0 z-30" onClick={() => setActiveMenuRowId(null)} />
+                                
+                                {/* Dropdown Card */}
+                                <motion.div 
+                                  initial={{ opacity: 0, scale: 0.95, y: isNearBottom ? 8 : -8 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: isNearBottom ? 8 : -8 }}
+                                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                                  className={`absolute right-4 z-50 w-44 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card p-1 shadow-lg text-left ${
+                                    isNearBottom ? 'bottom-full mb-1' : 'top-full mt-1'
+                                  }`}
+                                >
                                 <button
                                   onClick={() => {
                                     router.push(`/customers/${c.id}`);
@@ -489,61 +491,66 @@ export default function CustomersPage() {
                         </AnimatePresence>
                       </td>
                     </motion.tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile View: Compact vertical list layout, no large cards */}
             <div className="md:hidden divide-y divide-border overflow-y-auto scrollbar-none">
-              {paginatedCustomers.map((c) => (
-                <div key={c.id} className="flex items-center justify-between p-3.5 hover:bg-secondary/15 transition-all duration-150 gap-3">
-                  {/* Left part: ID & Name, Package & Contact info */}
-                  <div className="flex-1 min-w-0 space-y-1 text-left">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-mono font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-1 rounded">
-                        {c.id}
-                      </span>
-                      <Link href={`/customers/${c.id}`} className="font-semibold text-foreground hover:underline text-xs truncate block">
-                        {c.name}
-                      </Link>
+              {paginatedCustomers.map((c, idx) => {
+                const isMobileNearBottom = idx >= paginatedCustomers.length - 2 && paginatedCustomers.length > 2;
+                return (
+                  <div key={c.id} className="flex items-center justify-between p-3.5 hover:bg-secondary/15 transition-all duration-150 gap-3">
+                    {/* Left part: ID & Name, Package & Contact info */}
+                    <div className="flex-1 min-w-0 space-y-1 text-left">
+                      <div className="flex items-center gap-1.5">
+                        <Link href={`/customers/${c.id}`} className="text-[10px] font-mono font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded hover:underline">
+                          {c.id}
+                        </Link>
+                        <span className="font-semibold text-foreground text-xs truncate block">
+                          {c.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
+                        <span className="truncate max-w-[100px]">{c.packageName}</span>
+                        <span>•</span>
+                        <span>{c.phone}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
-                      <span className="truncate max-w-[100px]">{c.packageName}</span>
-                      <span>•</span>
-                      <span>{c.phone}</span>
+
+                    {/* Middle part: Status Badges (Payment Status & Connection Status) */}
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <StatusBadge status={c.paymentStatus} />
+                      <StatusBadge status={c.connectionStatus} />
                     </div>
-                  </div>
 
-                  {/* Middle part: Status Badges (Payment Status & Connection Status) */}
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <StatusBadge status={c.paymentStatus} />
-                    <StatusBadge status={c.connectionStatus} />
-                  </div>
+                    {/* Right part: Actions Trigger */}
+                    <div className="relative flex-shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuRowId(activeMenuRowId === c.id ? null : c.id);
+                        }}
+                        className="h-8 w-8 rounded-lg border border-border flex items-center justify-center bg-card hover:bg-secondary text-xs transition-colors hover:scale-105 active:scale-95"
+                      >
+                        <span className="text-[9px]">▼</span>
+                      </button>
 
-                  {/* Right part: Actions Trigger */}
-                  <div className="relative flex-shrink-0">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveMenuRowId(activeMenuRowId === c.id ? null : c.id);
-                      }}
-                      className="h-8 w-8 rounded-lg border border-border flex items-center justify-center bg-card hover:bg-secondary text-xs transition-colors hover:scale-105 active:scale-95"
-                    >
-                      <span className="text-[9px]">▼</span>
-                    </button>
-
-                    <AnimatePresence>
-                      {activeMenuRowId === c.id && (
-                        <>
-                          <div className="fixed inset-0 z-35" onClick={() => setActiveMenuRowId(null)} />
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: -8 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: -8 }}
-                            transition={{ duration: 0.15, ease: 'easeOut' }}
-                            className="absolute right-0 bottom-10 z-40 w-44 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card p-1 shadow-lg text-left"
-                          >
+                      <AnimatePresence>
+                        {activeMenuRowId === c.id && (
+                          <>
+                            <div className="fixed inset-0 z-35" onClick={() => setActiveMenuRowId(null)} />
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0.95, y: isMobileNearBottom ? 8 : -8 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.95, y: isMobileNearBottom ? 8 : -8 }}
+                              transition={{ duration: 0.15, ease: 'easeOut' }}
+                              className={`absolute right-0 z-50 w-44 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card p-1 shadow-lg text-left ${
+                                isMobileNearBottom ? 'bottom-full mb-1' : 'top-full mt-1'
+                              }`}
+                            >
                             <button
                               onClick={() => {
                                 router.push(`/customers/${c.id}`);
@@ -632,7 +639,8 @@ export default function CustomersPage() {
                     </AnimatePresence>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </>
         ) : (

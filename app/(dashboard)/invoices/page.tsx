@@ -129,9 +129,9 @@ export default function InvoicesPage() {
                   <tr key={inv.id} className="hover:bg-secondary/20 transition-all duration-150">
                     <td className="p-4 font-semibold text-indigo-500">{inv.id}</td>
                     <td className="p-4">
-                      <Link href={`/customers/${inv.customerId}`} className="font-semibold text-foreground hover:underline hover:text-primary transition-colors block">
+                      <span className="font-semibold text-foreground block">
                         {inv.customerName}
-                      </Link>
+                      </span>
                       <Link href={`/customers/${inv.customerId}`} className="text-xs text-indigo-500 hover:underline transition-colors block font-mono">
                         ID: {inv.customerId}
                       </Link>

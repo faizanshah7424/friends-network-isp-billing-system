@@ -24,9 +24,12 @@ interface BillingSystemContextType {
   rechargeCustomerId: string | null;
   currentUser: UserSession;
   setCurrentUser: (user: UserSession) => void;
+  isAuthenticated: boolean;
+  setIsAuthenticated: (val: boolean) => void;
+  isLoaded: boolean;
   openRecharge: (customerId: string) => void;
   closeRecharge: () => void;
-  addCustomer: (customer: Omit<Customer, 'id' | 'outstandingBalance' | 'timeline' | 'notes' | 'packageName'>) => Customer;
+  addCustomer: (customer: Omit<Customer, 'outstandingBalance' | 'timeline' | 'notes' | 'packageName'>) => Customer;
   updateCustomer: (customer: Customer) => void;
   deleteCustomer: (id: string) => void;
   suspendCustomer: (id: string) => void;
@@ -63,6 +66,7 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
     role: 'Super Admin',
     email: 'shahid@friendsnetwork.net',
   });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -88,9 +92,13 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
         if (storedUser) {
           try {
             setCurrentUserState(JSON.parse(storedUser));
+            setIsAuthenticated(true);
           } catch (e) {
             console.error('Failed to parse stored user', e);
+            setIsAuthenticated(false);
           }
+        } else {
+          setIsAuthenticated(false);
         }
       }, 0);
       
@@ -112,6 +120,11 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
   const setCurrentUser = (user: UserSession) => {
     setCurrentUserState(user);
     saveToLocalStorage('fnb_current_user', user);
+    if (user && user.name) {
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
+    }
   };
 
 
@@ -123,14 +136,12 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
     setRechargeCustomerId(null);
   };
 
-  const addCustomer = (customerData: Omit<Customer, 'id' | 'outstandingBalance' | 'timeline' | 'notes' | 'packageName'>) => {
+  const addCustomer = (customerData: Omit<Customer, 'outstandingBalance' | 'timeline' | 'notes' | 'packageName'>) => {
     const pkg = packages.find((p) => p.id === customerData.packageId);
     const packageName = pkg ? pkg.name : 'Unknown Package';
-    const nextId = `FNB-${1000 + customers.length + 1}`;
     
     const newCustomer: Customer = {
       ...customerData,
-      id: nextId,
       packageName,
       outstandingBalance: 0,
       timeline: [
@@ -635,6 +646,9 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
         rechargeCustomerId,
         currentUser,
         setCurrentUser,
+        isAuthenticated,
+        setIsAuthenticated,
+        isLoaded,
         openRecharge,
         closeRecharge,
         addCustomer,

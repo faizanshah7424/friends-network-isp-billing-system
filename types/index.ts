@@ -26,6 +26,7 @@ export interface Customer {
   packageId: string;
   packageName: string;
   monthlyCharges: number;
+  installationCharges?: number;
   routerMac?: string;
   onuNumber?: string;
   connectionDate: string;
@@ -72,6 +73,9 @@ export interface Payment {
   billingMonth: string;
   notes?: string;
   receivedBy: string;
+  paymentType?: 'package' | 'custom';
+  customReason?: string;
+  packagePrice?: number;
 }
 
 export interface Complaint {

@@ -179,14 +179,18 @@ export default function CustomerDetailsPage() {
             </div>
 
             {/* Quick Metrics */}
-            <div className="grid grid-cols-2 gap-4 border-y border-border py-4">
-              <div className="text-center">
-                <span className="text-[10px] text-muted-foreground font-bold uppercase">Outstanding</span>
-                <p className="text-lg font-black text-rose-500 mt-0.5">PKR {customer.outstandingBalance}</p>
+            <div className="grid grid-cols-3 gap-2 border-y border-border py-4 text-center">
+              <div>
+                <span className="text-[9px] text-muted-foreground font-bold uppercase">Outstanding</span>
+                <p className="text-sm font-black text-rose-500 mt-0.5">PKR {customer.outstandingBalance}</p>
               </div>
-              <div className="text-center border-l border-border">
-                <span className="text-[10px] text-muted-foreground font-bold uppercase">Monthly Bill</span>
-                <p className="text-lg font-black text-indigo-500 mt-0.5">PKR {customer.monthlyCharges}</p>
+              <div className="border-l border-border">
+                <span className="text-[9px] text-muted-foreground font-bold uppercase">Monthly Bill</span>
+                <p className="text-sm font-black text-indigo-500 mt-0.5">PKR {customer.monthlyCharges}</p>
+              </div>
+              <div className="border-l border-border">
+                <span className="text-[9px] text-muted-foreground font-bold uppercase">Installation</span>
+                <p className="text-sm font-black text-slate-700 dark:text-slate-350 mt-0.5">PKR {customer.installationCharges || 0}</p>
               </div>
             </div>
 
@@ -236,6 +240,14 @@ export default function CustomerDetailsPage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Service Plan</span>
                 <span className="font-semibold text-foreground text-right max-w-[150px] truncate">{customer.packageName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Monthly Charges</span>
+                <span className="font-semibold text-foreground">PKR {customer.monthlyCharges}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Installation Charges</span>
+                <span className="font-semibold text-foreground">PKR {customer.installationCharges || 0}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">ONT Serial</span>

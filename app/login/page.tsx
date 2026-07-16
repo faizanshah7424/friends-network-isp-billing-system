@@ -130,42 +130,48 @@ const FiberOpticBackground = () => {
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none block z-0" />;
 };
 
+import { authService } from '@/services/auth';
+
 export default function LoginPage() {
   const router = useRouter();
   const { setCurrentUser } = useBillingSystem();
-  const [email, setEmail] = useState('shahid@friendsnetwork.net');
-  const [password, setPassword] = useState('••••••••');
+  const [email, setEmail] = useState('muhammad_shahid');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate authentication verification
-    setTimeout(() => {
+    try {
+      // Allow clean username or full email address
+      const username = email.includes('@') ? email.split('@')[0] : email;
+      const cleanPassword = password || 'shahid123'; // Default fallback if they left unchanged
+      
+      const res = await authService.login(username, cleanPassword);
+      localStorage.setItem('fnb_access_token', res.access_token);
+      
+      const me = await authService.getMe();
+      const userSession = {
+        name: me.fullName,
+        role: me.role.name as 'Super Admin' | 'Sub Admin',
+        email: me.username + '@friendsnetwork.net',
+      };
+      
       setIsLoading(false);
       setIsRedirecting(true);
 
       // Post-auth redirection delay for loader splash
       setTimeout(() => {
-        if (email.toLowerCase().includes('noor')) {
-          setCurrentUser({
-            name: 'Noor Jamal',
-            role: 'Sub Admin',
-            email: 'noor@friendsnetwork.net',
-          });
-        } else {
-          setCurrentUser({
-            name: 'Muhammad Shahid',
-            role: 'Super Admin',
-            email: 'shahid@friendsnetwork.net',
-          });
-        }
+        setCurrentUser(userSession);
         router.push('/');
       }, 1500);
-    }, 1500);
+    } catch (err: any) {
+      setIsLoading(false);
+      alert(err.response?.data?.detail || "Authentication failed. Please verify credentials.");
+    }
   };
 
   if (isRedirecting) {

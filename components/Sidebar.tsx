@@ -17,6 +17,20 @@ import {
   Settings,
   LogOut,
   Landmark,
+  Brain,
+  Key,
+  Building,
+  LineChart,
+  Activity,
+  ShoppingCart,
+  MessageSquare,
+  FolderOpen,
+  Plug,
+  Sliders,
+  Bot,
+  Wrench,
+  BookOpen,
+  Zap,
 } from 'lucide-react';
 import { useBillingSystem } from '@/lib/context';
 
@@ -41,6 +55,22 @@ export default function Sidebar({ onClose }: SidebarProps) {
     { label: 'Complaints', href: '/complaints', icon: AlertCircle },
     { label: 'Reports', href: '/reports', icon: BarChart3 },
     { label: 'Balance Sheet', href: '/balance-sheet', icon: Landmark },
+    { label: 'ISPs', href: '/tenants', icon: Building },
+    { label: 'Licensing', href: '/licensing', icon: Key },
+    { label: 'AI Assistant', href: '/ai-assistant', icon: Brain },
+    { label: 'Analytics', href: '/analytics', icon: LineChart },
+    { label: 'NOC Dashboard', href: '/noc', icon: Activity },
+    { label: 'Procurement', href: '/procurement', icon: ShoppingCart },
+    { label: 'Finance', href: '/finance', icon: Landmark },
+    { label: 'Communications', href: '/communication', icon: MessageSquare },
+    { label: 'Documents', href: '/document', icon: FolderOpen },
+    { label: 'Plugins', href: '/plugins', icon: Plug },
+    { label: 'AI Settings', href: '/ai-admin', icon: Sliders },
+    { label: 'AI Customer Chat', href: '/ai-customer', icon: Bot },
+    { label: 'AI Troubleshooting', href: '/ai-technician', icon: Wrench },
+    { label: 'Knowledge Base', href: '/knowledge-base', icon: BookOpen },
+    { label: 'Automation Rules', href: '/automation', icon: Zap },
+    { label: 'AI Insights', href: '/ai-insights', icon: LineChart },
     { label: 'Notifications', href: '/notifications', icon: Bell, badge: unreadNotifs },
     { label: 'Settings', href: '/settings', icon: Settings },
   ];
@@ -50,7 +80,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
       return ['Dashboard', 'Customers', 'Payments', 'Complaints', 'Notifications'].includes(item.label);
     }
     if (currentUser.role === 'Super Admin') {
-      return ['Dashboard', 'Customers', 'Billing', 'Payments', 'Bulk Actions', 'Invoices', 'Packages', 'Complaints', 'Reports', 'Balance Sheet', 'Settings'].includes(item.label);
+      return ['Dashboard', 'Customers', 'Billing', 'Payments', 'Bulk Actions', 'Invoices', 'Packages', 'Complaints', 'Reports', 'Balance Sheet', 'ISPs', 'Licensing', 'AI Assistant', 'Analytics', 'NOC Dashboard', 'Procurement', 'Finance', 'Communications', 'Documents', 'Plugins', 'AI Settings', 'AI Customer Chat', 'AI Troubleshooting', 'Knowledge Base', 'Automation Rules', 'AI Insights', 'Notifications', 'Settings'].includes(item.label);
     }
     return true;
   });

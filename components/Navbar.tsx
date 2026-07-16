@@ -34,9 +34,21 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
   const searchRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
@@ -48,7 +60,12 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
       (c) =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.phone.includes(searchQuery)
+        c.phone.includes(searchQuery) ||
+        (c.whatsapp && c.whatsapp.includes(searchQuery)) ||
+        c.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.area.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.packageName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.routerMac && c.routerMac.toLowerCase().includes(searchQuery.toLowerCase()))
     );
     setSearchResults(filtered.slice(0, 5));
   }, [searchQuery, customers]);
@@ -89,6 +106,7 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
           <div className="relative">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
+              ref={inputRef}
               type="text"
               placeholder="Search customer (Name, ID, Mobile)..."
               value={searchQuery}
@@ -97,8 +115,11 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
                 setShowSearchDropdown(true);
               }}
               onFocus={() => setShowSearchDropdown(true)}
-              className="h-10 w-full rounded-xl border border-border bg-secondary/50 pl-10 pr-4 text-sm outline-none transition-all focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20"
+              className="h-10 w-full rounded-xl border border-border bg-secondary/50 pl-10 pr-12 text-sm outline-none transition-all focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20"
             />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 rounded bg-[#18181B] border border-border px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground pointer-events-none">
+              <span>Ctrl</span><span>K</span>
+            </div>
           </div>
 
           {/* Search Dropdown Results */}

@@ -3,15 +3,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Customer, Package, Invoice, Payment, Complaint, Notification, SystemSettings, UserSession } from '@/types';
 import StartupSplash from '@/components/ui/StartupSplash';
-import {
-  initialCustomers,
-  initialPackages,
-  initialInvoices,
-  initialPayments,
-  initialComplaints,
-  initialNotifications,
-  defaultSettings,
-} from '@/data/customerDb';
+import { authService } from '@/services/auth';
+import { customerService } from '@/services/customers';
+import { packageService } from '@/services/packages';
+import { paymentService } from '@/services/payments';
+import { billingService } from '@/services/billing';
+import { complaintService } from '@/services/complaints';
+import { notificationService } from '@/services/notifications';
+import { settingsService } from '@/services/settings';
 
 interface BillingSystemContextType {
   customers: Customer[];
@@ -23,13 +22,13 @@ interface BillingSystemContextType {
   settings: SystemSettings;
   rechargeCustomerId: string | null;
   currentUser: UserSession;
-  setCurrentUser: (user: UserSession) => void;
+  setCurrentUser: (user: UserSession | null) => void;
   isAuthenticated: boolean;
   setIsAuthenticated: (val: boolean) => void;
   isLoaded: boolean;
   openRecharge: (customerId: string) => void;
   closeRecharge: () => void;
-  addCustomer: (customer: Omit<Customer, 'outstandingBalance' | 'timeline' | 'notes' | 'packageName'>) => Customer;
+  addCustomer: (customer: Omit<Customer, 'outstandingBalance' | 'timeline' | 'notes' | 'packageName'>) => any;
   updateCustomer: (customer: Customer) => void;
   deleteCustomer: (id: string) => void;
   suspendCustomer: (id: string) => void;
@@ -37,7 +36,7 @@ interface BillingSystemContextType {
   addPackage: (pkg: Omit<Package, 'id'>) => void;
   updatePackage: (pkg: Package) => void;
   deletePackage: (id: string) => void;
-  addInvoice: (invoice: Omit<Invoice, 'id' | 'grandTotal' | 'amountPaid' | 'outstandingBalance' | 'paymentStatus' | 'customerName'>) => Invoice;
+  addInvoice: (invoice: Omit<Invoice, 'id' | 'grandTotal' | 'amountPaid' | 'outstandingBalance' | 'paymentStatus' | 'customerName'>) => any;
   addPayment: (payment: Omit<Payment, 'id' | 'receivedBy'>) => { payment: Payment; invoice: Invoice | undefined };
   addComplaint: (complaint: Omit<Complaint, 'id' | 'ticketNumber' | 'status' | 'dateCreated' | 'timeline'>) => void;
   updateComplaintStatus: (id: string, status: Complaint['status'], comment: string, engineer?: string, engineerNotes?: string) => void;
@@ -48,7 +47,6 @@ interface BillingSystemContextType {
   addBulkPayments: (payments: Omit<Payment, 'id' | 'receivedBy'>[]) => void;
 }
 
-
 const BillingSystemContext = createContext<BillingSystemContextType | undefined>(undefined);
 
 export function BillingSystemProvider({ children }: { children: React.ReactNode }) {
@@ -58,7 +56,17 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
   const [payments, setPayments] = useState<Payment[]>([]);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [settings, setSettings] = useState<SystemSettings>(defaultSettings);
+  const [settings, setSettings] = useState<SystemSettings>({
+    companyName: 'Friends Network',
+    logo: '/friends-logo.png',
+    phone: '021-111-362-362',
+    email: 'support@friendsnetwork.net',
+    address: 'Karachi, Pakistan',
+    currency: 'PKR',
+    invoiceFooter: 'This is a computer-generated invoice.',
+    receiptFooter: 'Thank you for your payment.',
+  });
+
   const [isLoaded, setIsLoaded] = useState(false);
   const [rechargeCustomerId, setRechargeCustomerId] = useState<string | null>(null);
   const [currentUser, setCurrentUserState] = useState<UserSession>({
@@ -68,76 +76,93 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Synchronize data from backend
+  const fetchData = async () => {
+    try {
+      const [pkgs, custs, invs, pays, comps, notifs, sets] = await Promise.all([
+        packageService.getPackages(),
+        customerService.getCustomers(),
+        billingService.getInvoices(),
+        paymentService.getPayments(),
+        complaintService.getComplaints(),
+        notificationService.getNotifications(),
+        settingsService.getSettings(),
+      ]);
+      
+      setPackages(pkgs);
+      setCustomers(custs);
+      setInvoices(invs);
+      setPayments(pays);
+      setComplaints(comps);
+      setNotifications(notifs);
+      setSettings(sets);
+    } catch (err) {
+      console.error('Error fetching database lists from REST API:', err);
+    }
+  };
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (typeof window !== 'undefined') {
-      const dbImported = localStorage.getItem('fnb_db_imported_v3');
-      if (!dbImported) {
-        localStorage.removeItem('fnb_customers');
-        localStorage.removeItem('fnb_packages');
-        localStorage.removeItem('fnb_invoices');
-        localStorage.removeItem('fnb_payments');
-        localStorage.removeItem('fnb_complaints');
-        localStorage.removeItem('fnb_notifications');
-        localStorage.setItem('fnb_db_imported_v3', 'true');
-      }
-
-      const storedCustomers = localStorage.getItem('fnb_customers');
-      const storedPackages = localStorage.getItem('fnb_packages');
-      const storedInvoices = localStorage.getItem('fnb_invoices');
-      const storedPayments = localStorage.getItem('fnb_payments');
-      const storedComplaints = localStorage.getItem('fnb_complaints');
-      const storedNotifications = localStorage.getItem('fnb_notifications');
-      const storedSettings = localStorage.getItem('fnb_settings');
-      const storedUser = localStorage.getItem('fnb_current_user');
-
-      setTimeout(() => {
-        setCustomers(storedCustomers && dbImported ? JSON.parse(storedCustomers) : initialCustomers);
-        setPackages(storedPackages && dbImported ? JSON.parse(storedPackages) : initialPackages);
-        setInvoices(storedInvoices && dbImported ? JSON.parse(storedInvoices) : initialInvoices);
-        setPayments(storedPayments && dbImported ? JSON.parse(storedPayments) : initialPayments);
-        setComplaints(storedComplaints && dbImported ? JSON.parse(storedComplaints) : initialComplaints);
-        setNotifications(storedNotifications && dbImported ? JSON.parse(storedNotifications) : initialNotifications);
-        setSettings(storedSettings && dbImported ? JSON.parse(storedSettings) : defaultSettings);
-        
-        if (storedUser) {
+    
+    const initAuthAndData = async () => {
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('fnb_access_token');
+        if (token) {
           try {
-            setCurrentUserState(JSON.parse(storedUser));
+            const me = await authService.getMe();
+            const sessionUser: UserSession = {
+              name: me.fullName,
+              role: me.role.name as 'Super Admin' | 'Sub Admin',
+              email: me.username + '@friendsnetwork.net',
+            };
+            setCurrentUserState(sessionUser);
             setIsAuthenticated(true);
-          } catch (e) {
-            console.error('Failed to parse stored user', e);
+            await fetchData();
+          } catch (err) {
+            console.error('Session validation failed, clearing token:', err);
+            localStorage.removeItem('fnb_access_token');
+            localStorage.removeItem('fnb_current_user');
             setIsAuthenticated(false);
           }
         } else {
           setIsAuthenticated(false);
         }
-      }, 0);
+      }
       
+      // Enforce premium loader timing
       timer = setTimeout(() => {
         setIsLoaded(true);
       }, 2200);
-    }
+    };
+
+    initAuthAndData();
+    
     return () => {
       if (timer) clearTimeout(timer);
     };
   }, []);
 
-  const saveToLocalStorage = (key: string, data: unknown) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(key, JSON.stringify(data));
-    }
-  };
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const interval = setInterval(() => {
+      fetchData();
+    }, 45000); // Poll every 45 seconds
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
-  const setCurrentUser = (user: UserSession) => {
-    setCurrentUserState(user);
-    saveToLocalStorage('fnb_current_user', user);
-    if (user && user.name) {
+  const setCurrentUser = (user: UserSession | null) => {
+    if (user) {
+      setCurrentUserState(user);
       setIsAuthenticated(true);
+      fetchData();
     } else {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('fnb_access_token');
+        localStorage.removeItem('fnb_current_user');
+      }
       setIsAuthenticated(false);
     }
   };
-
 
   const openRecharge = (customerId: string) => {
     setRechargeCustomerId(customerId);
@@ -150,10 +175,12 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
   const addCustomer = (customerData: Omit<Customer, 'outstandingBalance' | 'timeline' | 'notes' | 'packageName'>) => {
     const pkg = packages.find((p) => p.id === customerData.packageId);
     const packageName = pkg ? pkg.name : 'Unknown Package';
+    const monthlyCharges = pkg ? pkg.monthlyCharges : 0;
     
     const newCustomer: Customer = {
       ...customerData,
       packageName,
+      monthlyCharges,
       outstandingBalance: 0,
       timeline: [
         {
@@ -167,40 +194,77 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
       notes: [],
     };
 
-    const updated = [newCustomer, ...customers];
-    setCustomers(updated);
-    saveToLocalStorage('fnb_customers', updated);
+    // Optimistic state update
+    setCustomers((prev) => [newCustomer, ...prev]);
 
-    // Create a notification
-    const newNotif: Notification = {
-      id: `notif-${Date.now()}`,
-      type: 'new_customer',
-      title: 'New Customer Registered',
-      message: `${newCustomer.name} (${newCustomer.id}) has been added under package ${packageName}.`,
-      date: new Date().toLocaleString(),
-      isRead: false,
-    };
-    const updatedNotifs = [newNotif, ...notifications];
-    setNotifications(updatedNotifs);
-    saveToLocalStorage('fnb_notifications', updatedNotifs);
+    // Async REST post
+    customerService.createCustomer({
+      customerId: customerData.id,
+      name: customerData.name,
+      phone: customerData.phone,
+      whatsapp: customerData.whatsapp,
+      address: customerData.address,
+      area: customerData.area,
+      packageId: customerData.packageId,
+      installationCharges: customerData.installationCharges,
+      routerMac: customerData.routerMac,
+      onuNumber: customerData.onuNumber,
+      connectionDate: customerData.connectionDate,
+      connectionStatus: 'Active',
+    }).then(() => {
+      fetchData();
+    }).catch((err) => {
+      console.error('Failed to create customer record on backend:', err);
+    });
 
     return newCustomer;
   };
 
   const updateCustomer = (updatedCustomer: Customer) => {
-    const updated = customers.map((c) => (c.id === updatedCustomer.id ? updatedCustomer : c));
-    setCustomers(updated);
-    saveToLocalStorage('fnb_customers', updated);
+    // Optimistic Update
+    setCustomers((prev) => prev.map((c) => (c.id === updatedCustomer.id ? updatedCustomer : c)));
+
+    // Compare connectionStatus changes to fire specific endpoints
+    const old = customers.find((c) => c.id === updatedCustomer.id);
+    if (old) {
+      if (old.connectionStatus !== updatedCustomer.connectionStatus) {
+        if (updatedCustomer.connectionStatus === 'Active') {
+          customerService.activateCustomer(updatedCustomer.id)
+            .then(() => fetchData())
+            .catch((err) => console.error(err));
+        } else {
+          customerService.suspendCustomer(updatedCustomer.id)
+            .then(() => fetchData())
+            .catch((err) => console.error(err));
+        }
+      }
+      
+      // Update metadata details
+      if (old.name !== updatedCustomer.name || old.phone !== updatedCustomer.phone || old.address !== updatedCustomer.address || old.packageId !== updatedCustomer.packageId) {
+        customerService.updateCustomer(updatedCustomer.id, {
+          name: updatedCustomer.name,
+          phone: updatedCustomer.phone,
+          whatsapp: updatedCustomer.whatsapp,
+          address: updatedCustomer.address,
+          area: updatedCustomer.area,
+          packageId: updatedCustomer.packageId,
+          routerMac: updatedCustomer.routerMac,
+          onuNumber: updatedCustomer.onuNumber,
+        }).then(() => fetchData())
+          .catch((err) => console.error(err));
+      }
+    }
   };
 
   const deleteCustomer = (id: string) => {
-    const updated = customers.filter((c) => c.id !== id);
-    setCustomers(updated);
-    saveToLocalStorage('fnb_customers', updated);
+    setCustomers((prev) => prev.filter((c) => c.id !== id));
+    customerService.deleteCustomer(id)
+      .then(() => fetchData())
+      .catch((err) => console.error('Failed to delete customer:', err));
   };
 
   const suspendCustomer = (id: string) => {
-    const updated = customers.map((c) => {
+    setCustomers((prev) => prev.map((c) => {
       if (c.id === id) {
         return {
           ...c,
@@ -218,13 +282,15 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
         };
       }
       return c;
-    });
-    setCustomers(updated);
-    saveToLocalStorage('fnb_customers', updated);
+    }));
+
+    customerService.suspendCustomer(id)
+      .then(() => fetchData())
+      .catch((err) => console.error(err));
   };
 
   const activateCustomer = (id: string) => {
-    const updated = customers.map((c) => {
+    setCustomers((prev) => prev.map((c) => {
       if (c.id === id) {
         return {
           ...c,
@@ -242,31 +308,38 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
         };
       }
       return c;
-    });
-    setCustomers(updated);
-    saveToLocalStorage('fnb_customers', updated);
+    }));
+
+    customerService.activateCustomer(id)
+      .then(() => fetchData())
+      .catch((err) => console.error(err));
   };
 
   const addPackage = (packageData: Omit<Package, 'id'>) => {
+    const mockId = `pkg-${packages.length + 1}`;
     const newPkg: Package = {
       ...packageData,
-      id: `pkg-${packages.length + 1}`,
+      id: mockId,
     };
-    const updated = [...packages, newPkg];
-    setPackages(updated);
-    saveToLocalStorage('fnb_packages', updated);
+    setPackages((prev) => [...prev, newPkg]);
+
+    packageService.createPackage(packageData)
+      .then(() => fetchData())
+      .catch((err) => console.error(err));
   };
 
   const updatePackage = (updatedPkg: Package) => {
-    const updated = packages.map((p) => (p.id === updatedPkg.id ? updatedPkg : p));
-    setPackages(updated);
-    saveToLocalStorage('fnb_packages', updated);
+    setPackages((prev) => prev.map((p) => (p.id === updatedPkg.id ? updatedPkg : p)));
+    packageService.updatePackage(updatedPkg)
+      .then(() => fetchData())
+      .catch((err) => console.error(err));
   };
 
   const deletePackage = (id: string) => {
-    const updated = packages.filter((p) => p.id !== id);
-    setPackages(updated);
-    saveToLocalStorage('fnb_packages', updated);
+    setPackages((prev) => prev.filter((p) => p.id !== id));
+    packageService.deletePackage(id)
+      .then(() => fetchData())
+      .catch((err) => console.error(err));
   };
 
   const addInvoice = (invoiceData: Omit<Invoice, 'id' | 'grandTotal' | 'amountPaid' | 'outstandingBalance' | 'paymentStatus' | 'customerName'>) => {
@@ -274,12 +347,12 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
     const customerName = customer ? customer.name : 'Unknown Customer';
     
     const subtotal = invoiceData.monthlyCharges + invoiceData.previousDue + invoiceData.additionalCharges;
-    const discount = invoiceData.discount;
-    const grandTotal = Math.max(0, subtotal - discount);
+    const grandTotal = Math.max(0, subtotal - invoiceData.discount);
+    const mockId = `INV-2026-${1000 + invoices.length + 1}`;
 
     const newInvoice: Invoice = {
       ...invoiceData,
-      id: `INV-2026-${1000 + invoices.length + 1}`,
+      id: mockId,
       customerName,
       grandTotal,
       amountPaid: 0,
@@ -287,46 +360,23 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
       paymentStatus: 'Unpaid',
     };
 
-    const updatedInvoices = [newInvoice, ...invoices];
-    setInvoices(updatedInvoices);
-    saveToLocalStorage('fnb_invoices', updatedInvoices);
+    setInvoices((prev) => [newInvoice, ...prev]);
 
-    // Update customer outstanding balance and status
-    const updatedCustomers = customers.map((c) => {
-      if (c.id === invoiceData.customerId) {
-        return {
-          ...c,
-          outstandingBalance: c.outstandingBalance + grandTotal,
-          paymentStatus: 'Unpaid' as const,
-          timeline: [
-            {
-              id: `t-${Date.now()}`,
-              title: 'Invoice Generated',
-              description: `Invoice ${newInvoice.id} generated for ${invoiceData.billingMonth} for PKR ${grandTotal}.`,
-              date: new Date().toISOString().split('T')[0],
-              type: 'info' as const,
-            },
-            ...c.timeline,
-          ],
-        };
-      }
-      return c;
+    // Backend save
+    billingService.createInvoice({
+      customerId: invoiceData.customerId,
+      billingMonth: invoiceData.billingMonth,
+      monthlyCharges: invoiceData.monthlyCharges,
+      previousDue: invoiceData.previousDue,
+      additionalCharges: invoiceData.additionalCharges,
+      discount: invoiceData.discount,
+      billingDate: invoiceData.billingDate,
+      dueDate: invoiceData.dueDate,
+    }).then(() => {
+      fetchData();
+    }).catch((err) => {
+      console.error(err);
     });
-    setCustomers(updatedCustomers);
-    saveToLocalStorage('fnb_customers', updatedCustomers);
-
-    // Notification
-    const newNotif: Notification = {
-      id: `notif-${Date.now()}`,
-      type: 'payment_pending',
-      title: 'Invoice Generated',
-      message: `Invoice ${newInvoice.id} generated for ${customerName} - PKR ${grandTotal}.`,
-      date: new Date().toLocaleString(),
-      isRead: false,
-    };
-    const updatedNotifs = [newNotif, ...notifications];
-    setNotifications(updatedNotifs);
-    saveToLocalStorage('fnb_notifications', updatedNotifs);
 
     return newInvoice;
   };
@@ -336,294 +386,186 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
     const newPayment: Payment = {
       ...paymentData,
       id: newPaymentId,
-      receivedBy: 'Muhammad Shahid',
+      receivedBy: currentUser?.name || 'Muhammad Shahid',
     };
 
-    const updatedPayments = [newPayment, ...payments];
-    setPayments(updatedPayments);
-    saveToLocalStorage('fnb_payments', updatedPayments);
+    // Optimistic states update
+    setPayments((prev) => [newPayment, ...prev]);
 
-    // Find unpaid invoices for this customer and mark them paid
-    let remainingPayment = paymentData.amountReceived;
     let customerInvoice: Invoice | undefined;
-
     const updatedInvoices = invoices.map((inv) => {
       if (inv.customerId === paymentData.customerId && inv.paymentStatus !== 'Paid') {
         customerInvoice = inv;
-        const canPay = Math.min(inv.outstandingBalance, remainingPayment);
+        const canPay = Math.min(inv.outstandingBalance, paymentData.amountReceived);
         const newOutstanding = inv.outstandingBalance - canPay;
-        const newPaid = inv.amountPaid + canPay;
-        remainingPayment -= canPay;
-        
         return {
           ...inv,
-          amountPaid: newPaid,
+          amountPaid: inv.amountPaid + canPay,
           outstandingBalance: newOutstanding,
           paymentStatus: newOutstanding === 0 ? ('Paid' as const) : ('Pending' as const),
         };
       }
       return inv;
     });
-
     setInvoices(updatedInvoices);
-    saveToLocalStorage('fnb_invoices', updatedInvoices);
 
-    // Update customer status and outstanding balance
-    const updatedCustomers = customers.map((c) => {
+    setCustomers((prev) => prev.map((c) => {
       if (c.id === paymentData.customerId) {
         const newOutstanding = Math.max(0, c.outstandingBalance - paymentData.amountReceived);
         return {
           ...c,
           outstandingBalance: newOutstanding,
           paymentStatus: newOutstanding === 0 ? ('Paid' as const) : ('Pending' as const),
-          timeline: [
-            {
-              id: `t-${Date.now()}`,
-              title: 'Payment Received',
-              description: `Received PKR ${paymentData.amountReceived} via ${paymentData.paymentMethod}. Ref: ${paymentData.referenceNumber || 'N/A'}.`,
-              date: new Date().toISOString().split('T')[0],
-              type: 'success' as const,
-            },
-            ...c.timeline,
-          ],
         };
       }
       return c;
-    });
-    setCustomers(updatedCustomers);
-    saveToLocalStorage('fnb_customers', updatedCustomers);
+    }));
 
-    // Notification
-    const newNotif: Notification = {
-      id: `notif-${Date.now()}`,
-      type: 'payment_received',
-      title: 'Payment Received',
-      message: `${paymentData.customerName} paid PKR ${paymentData.amountReceived} via ${paymentData.paymentMethod}.`,
-      date: new Date().toLocaleString(),
-      isRead: false,
-    };
-    const updatedNotifs = [newNotif, ...notifications];
-    setNotifications(updatedNotifs);
-    saveToLocalStorage('fnb_notifications', updatedNotifs);
+    // REST call
+    paymentService.receivePayment(
+      paymentData.customerId,
+      paymentData.amountReceived,
+      paymentData.paymentMethod,
+      paymentData.referenceNumber,
+      0,
+      paymentData.notes
+    ).then(() => {
+      fetchData();
+    }).catch((err) => {
+      console.error(err);
+    });
 
     return { payment: newPayment, invoice: customerInvoice };
   };
 
   const addBulkPayments = (paymentsData: Omit<Payment, 'id' | 'receivedBy'>[]) => {
-    let tempPayments = [...payments];
-    let tempInvoices = [...invoices];
-    let tempCustomers = [...customers];
-    let tempNotifications = [...notifications];
-
+    const newPayments: Payment[] = [];
     paymentsData.forEach((payData, idx) => {
-      const newPaymentId = `REC-2026-${1000 + tempPayments.length + 1}`;
-      const newPayment: Payment = {
+      const newPaymentId = `REC-2026-${1000 + payments.length + idx + 1}`;
+      newPayments.push({
         ...payData,
         id: newPaymentId,
-        receivedBy: 'Muhammad Shahid',
-      };
-
-      tempPayments = [newPayment, ...tempPayments];
-
-      // Find unpaid invoices for this customer and mark them paid
-      let remainingPayment = payData.amountReceived;
-      tempInvoices = tempInvoices.map((inv) => {
-        if (inv.customerId === payData.customerId && inv.paymentStatus !== 'Paid') {
-          const canPay = Math.min(inv.outstandingBalance, remainingPayment);
-          const newOutstanding = inv.outstandingBalance - canPay;
-          const newPaid = inv.amountPaid + canPay;
-          remainingPayment -= canPay;
-          
-          return {
-            ...inv,
-            amountPaid: newPaid,
-            outstandingBalance: newOutstanding,
-            paymentStatus: newOutstanding === 0 ? ('Paid' as const) : ('Pending' as const),
-          };
-        }
-        return inv;
+        receivedBy: currentUser?.name || 'Muhammad Shahid',
       });
-
-      // Update customer status and outstanding balance
-      tempCustomers = tempCustomers.map((c) => {
-        if (c.id === payData.customerId) {
-          const newOutstanding = Math.max(0, c.outstandingBalance - payData.amountReceived);
-          return {
-            ...c,
-            outstandingBalance: newOutstanding,
-            paymentStatus: newOutstanding === 0 ? ('Paid' as const) : ('Pending' as const),
-            timeline: [
-              {
-                id: `t-${Date.now()}-${idx}`,
-                title: 'Payment Received (Bulk)',
-                description: `Received PKR ${payData.amountReceived} via ${payData.paymentMethod} in bulk update.`,
-                date: new Date().toISOString().split('T')[0],
-                type: 'success' as const,
-              },
-              ...c.timeline,
-            ],
-          };
-        }
-        return c;
-      });
-
-      // Create notification
-      const newNotif: Notification = {
-        id: `notif-${Date.now()}-${idx}`,
-        type: 'payment_received',
-        title: 'Payment Received (Bulk)',
-        message: `${payData.customerName} paid PKR ${payData.amountReceived} via ${payData.paymentMethod} (Bulk).`,
-        date: new Date().toLocaleString(),
-        isRead: false,
-      };
-      tempNotifications = [newNotif, ...tempNotifications];
     });
 
-    setPayments(tempPayments);
-    saveToLocalStorage('fnb_payments', tempPayments);
+    setPayments((prev) => [...newPayments, ...prev]);
 
-    setInvoices(tempInvoices);
-    saveToLocalStorage('fnb_invoices', tempInvoices);
+    // Backend bulk recharges execution
+    const promises = paymentsData.map((pay) =>
+      paymentService.receivePayment(
+        pay.customerId,
+        pay.amountReceived,
+        pay.paymentMethod,
+        pay.referenceNumber,
+        0,
+        pay.notes
+      )
+    );
 
-    setCustomers(tempCustomers);
-    saveToLocalStorage('fnb_customers', tempCustomers);
-
-    setNotifications(tempNotifications);
-    saveToLocalStorage('fnb_notifications', tempNotifications);
+    Promise.all(promises)
+      .then(() => {
+        fetchData();
+      })
+      .catch((err) => {
+        console.error('Failed to submit bulk payment logs:', err);
+      });
   };
 
   const addComplaint = (complaintData: Omit<Complaint, 'id' | 'ticketNumber' | 'status' | 'dateCreated' | 'timeline'>) => {
     const nextTicket = `TIC-${1000 + complaints.length + 1}`;
-    
-    const timeline = [
-      {
-        status: 'Pending',
-        date: new Date().toLocaleString(),
-        comment: 'Complaint Created.',
-      },
-    ];
-    let initialStatus: Complaint['status'] = 'Pending';
-    if (complaintData.assignedEngineer && complaintData.assignedEngineer !== 'None') {
-      timeline.push({
-        status: 'Assigned',
-        date: new Date().toLocaleString(),
-        comment: `Assigned to ${complaintData.assignedEngineer}.`,
-      });
-      initialStatus = 'Assigned';
-    }
-
     const newComplaint: Complaint = {
       ...complaintData,
       id: `comp-${complaints.length + 1}`,
       ticketNumber: nextTicket,
-      status: initialStatus,
+      status: (complaintData.assignedEngineer && complaintData.assignedEngineer !== 'None') ? 'Assigned' : 'Pending',
       dateCreated: new Date().toISOString().split('T')[0],
-      timeline,
+      timeline: [
+        {
+          status: 'Pending',
+          date: new Date().toLocaleString(),
+          comment: 'Complaint Created.',
+        },
+      ],
     };
 
-    const updatedComplaints = [newComplaint, ...complaints];
-    setComplaints(updatedComplaints);
-    saveToLocalStorage('fnb_complaints', updatedComplaints);
+    setComplaints((prev) => [newComplaint, ...prev]);
 
-    // Update customer timeline
-    const updatedCustomers = customers.map((c) => {
-      if (c.id === complaintData.customerId) {
-        return {
-          ...c,
-          timeline: [
-            {
-              id: `t-${Date.now()}`,
-              title: 'Complaint Logged',
-              description: `Logged complaint ticket ${nextTicket}: ${complaintData.issue}`,
-              date: new Date().toISOString().split('T')[0],
-              type: 'warning' as const,
-            },
-            ...c.timeline,
-          ],
-        };
-      }
-      return c;
+    complaintService.createComplaint({
+      customerId: complaintData.customerId,
+      mobileNumber: complaintData.mobileNumber || '',
+      category: complaintData.category || 'General Outage',
+      issue: complaintData.issue,
+      priority: complaintData.priority,
+      assignedEngineer: complaintData.assignedEngineer === 'None' ? null : complaintData.assignedEngineer,
+    }).then(() => {
+      fetchData();
+    }).catch((err) => {
+      console.error(err);
     });
-    setCustomers(updatedCustomers);
-    saveToLocalStorage('fnb_customers', updatedCustomers);
-
-    // Notification
-    const newNotif: Notification = {
-      id: `notif-${Date.now()}`,
-      type: 'complaint_created',
-      title: 'Complaint Logged',
-      message: `Ticket ${nextTicket} registered for ${complaintData.customerName}: "${complaintData.issue.substring(0, 40)}..."`,
-      date: new Date().toLocaleString(),
-      isRead: false,
-    };
-    const updatedNotifs = [newNotif, ...notifications];
-    setNotifications(updatedNotifs);
-    saveToLocalStorage('fnb_notifications', updatedNotifs);
   };
 
-  const updateComplaintStatus = (id: string, status: Complaint['status'], comment: string, engineer?: string, engineerNotes?: string) => {
-    const updated = complaints.map((c) => {
+  const updateComplaintStatus = (
+    id: string,
+    status: Complaint['status'],
+    comment: string,
+    engineer?: string,
+    engineerNotes?: string
+  ) => {
+    setComplaints((prev) => prev.map((c) => {
       if (c.id === id) {
-        const isResolved = status === 'Resolved';
-        const newTimeline = [
-          ...c.timeline,
-          {
-            status,
-            date: new Date().toLocaleString(),
-            comment,
-          },
-        ];
         return {
           ...c,
           status,
           assignedEngineer: engineer || c.assignedEngineer,
-          timeline: newTimeline,
           engineerNotes: engineerNotes || c.engineerNotes,
-          resolvedDate: isResolved ? new Date().toISOString().split('T')[0] : c.resolvedDate,
+          resolvedDate: status === 'Resolved' ? new Date().toISOString().split('T')[0] : c.resolvedDate,
+          timeline: [
+            ...c.timeline,
+            { status, date: new Date().toLocaleString(), comment },
+          ],
         };
       }
       return c;
+    }));
+
+    complaintService.updateComplaint(id, {
+      status,
+      assignedEngineer: engineer === 'None' ? null : engineer,
+      engineerNotes,
+      comment,
+    }).then(() => {
+      fetchData();
+    }).catch((err) => {
+      console.error(err);
     });
-
-    const targetComp = complaints.find((c) => c.id === id);
-    if (targetComp) {
-      const isResolved = status === 'Resolved';
-      const newNotif: Notification = {
-        id: `notif-${Date.now()}`,
-        type: isResolved ? 'complaint_resolved' : 'complaint_updated',
-        title: isResolved ? 'Complaint Resolved' : 'Complaint Status Updated',
-        message: `Ticket ${targetComp.ticketNumber} status updated to "${status}" by ${currentUser?.name || 'Staff'}. Notes: "${engineerNotes || 'None'}"`,
-        date: new Date().toLocaleString(),
-        isRead: false,
-      };
-      const updatedNotifs = [newNotif, ...notifications];
-      setNotifications(updatedNotifs);
-      saveToLocalStorage('fnb_notifications', updatedNotifs);
-    }
-
-    setComplaints(updated);
-    saveToLocalStorage('fnb_complaints', updated);
   };
 
   const updateSettings = (newSettings: SystemSettings) => {
     setSettings(newSettings);
-    saveToLocalStorage('fnb_settings', newSettings);
+    settingsService.updateSettings(newSettings)
+      .then(() => fetchData())
+      .catch((err) => console.error(err));
   };
 
   const markNotificationAsRead = (id: string) => {
-    const updated = notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n));
-    setNotifications(updated);
-    saveToLocalStorage('fnb_notifications', updated);
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+    notificationService.markAsRead(id)
+      .then(() => fetchData())
+      .catch((err) => console.error(err));
   };
 
   const markAllNotificationsAsRead = () => {
-    const updated = notifications.map((n) => ({ ...n, isRead: true }));
-    setNotifications(updated);
-    saveToLocalStorage('fnb_notifications', updated);
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    const unread = notifications.filter((n) => !n.isRead);
+    const promises = unread.map((n) => notificationService.markAsRead(n.id));
+    Promise.all(promises)
+      .then(() => fetchData())
+      .catch((err) => console.error(err));
   };
 
   const addCustomerNote = (customerId: string, text: string) => {
-    const updated = customers.map((c) => {
+    setCustomers((prev) => prev.map((c) => {
       if (c.id === customerId) {
         return {
           ...c,
@@ -632,16 +574,18 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
               id: `n-${Date.now()}`,
               text,
               date: new Date().toISOString().split('T')[0],
-              author: 'Muhammad Shahid (Admin)',
+              author: currentUser?.name || 'Muhammad Shahid (Admin)',
             },
             ...c.notes,
           ],
         };
       }
       return c;
-    });
-    setCustomers(updated);
-    saveToLocalStorage('fnb_customers', updated);
+    }));
+
+    customerService.addCustomerNote(customerId, text)
+      .then(() => fetchData())
+      .catch((err) => console.error(err));
   };
 
   return (

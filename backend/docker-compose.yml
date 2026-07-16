@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: fnb_postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword123
+      POSTGRES_DB: friends_network
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: fnb_fastapi_web
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgrespassword123@db:5432/friends_network
+      - SECRET_KEY=friends-network-super-secret-key-change-in-production-fnb
+      - ACCESS_TOKEN_EXPIRE_MINUTES=11520
+      - ALGORITHM=HS256
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

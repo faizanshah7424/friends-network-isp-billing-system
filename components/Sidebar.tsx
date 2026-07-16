@@ -35,7 +35,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
     { label: 'Customers', href: '/customers', icon: Users },
     { label: 'Billing', href: '/billing', icon: Receipt },
     { label: 'Payments', href: '/payments', icon: CreditCard },
-    { label: 'Bulk Payments', href: '/payments/bulk', icon: Layers },
+    { label: 'Bulk Actions', href: '/payments/bulk', icon: Layers },
     { label: 'Invoices', href: '/invoices', icon: FileText },
     { label: 'Packages', href: '/packages', icon: Wifi },
     { label: 'Complaints', href: '/complaints', icon: AlertCircle },
@@ -50,7 +50,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
       return ['Dashboard', 'Customers', 'Payments', 'Complaints', 'Notifications'].includes(item.label);
     }
     if (currentUser.role === 'Super Admin') {
-      return ['Dashboard', 'Customers', 'Billing', 'Payments', 'Bulk Payments', 'Invoices', 'Packages', 'Complaints', 'Reports', 'Balance Sheet', 'Settings'].includes(item.label);
+      return ['Dashboard', 'Customers', 'Billing', 'Payments', 'Bulk Actions', 'Invoices', 'Packages', 'Complaints', 'Reports', 'Balance Sheet', 'Settings'].includes(item.label);
     }
     return true;
   });

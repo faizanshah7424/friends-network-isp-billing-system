@@ -2,23 +2,18 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useBillingSystem } from '@/lib/context';
-import { Customer, ConnectionStatus, PaymentStatus } from '@/types';
+import { Customer } from '@/types';
 import StatusBadge from '@/components/StatusBadge';
 import {
   Search,
   Plus,
-  Eye,
-  UserX,
-  UserCheck,
-  Trash2,
-  Receipt,
-  History,
   Download,
   SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
   Loader2,
   AlertTriangle,
+  ArrowUpDown,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -60,10 +55,7 @@ export default function CustomersPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, areaFilter, statusFilter, paymentFilter]);
+
 
   // Extract unique areas for filtering
   const areas = useMemo(() => {
@@ -243,7 +235,10 @@ export default function CustomersPage() {
               type="text"
               placeholder="Search by name, ID, phone..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
               className="h-10 w-full rounded-xl border border-border bg-secondary/30 pl-10 pr-4 text-xs outline-none transition-all focus:border-primary focus:bg-card"
             />
           </div>
@@ -252,7 +247,10 @@ export default function CustomersPage() {
           <div>
             <select
               value={areaFilter}
-              onChange={(e) => setAreaFilter(e.target.value)}
+              onChange={(e) => {
+                setAreaFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3 text-xs outline-none transition-all focus:border-primary focus:bg-card"
             >
               <option value="All">All Areas</option>
@@ -268,7 +266,10 @@ export default function CustomersPage() {
           <div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3 text-xs outline-none transition-all focus:border-primary focus:bg-card"
             >
               <option value="All">All Connections</option>
@@ -282,7 +283,10 @@ export default function CustomersPage() {
             <div>
               <select
                 value={paymentFilter}
-                onChange={(e) => setPaymentFilter(e.target.value)}
+                onChange={(e) => {
+                  setPaymentFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3 text-xs outline-none transition-all focus:border-primary focus:bg-card"
               >
                 <option value="All">All Payments</option>
@@ -306,32 +310,48 @@ export default function CustomersPage() {
         ) : paginatedCustomers.length > 0 ? (
           <>
             {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+            <div className="hidden md:block overflow-x-auto max-h-[580px] overflow-y-auto scrollbar-thin">
+              <table className="w-full text-left border-collapse relative">
                 <thead>
-                  <tr className="border-b border-border bg-secondary/20 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    <th onClick={() => handleSort('id')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none">
-                      Customer ID {sortField === 'id' && (sortDirection === 'asc' ? '↑' : '↓')}
+                  <tr className="border-b border-border bg-secondary/15 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <th onClick={() => handleSort('id')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none sticky top-0 bg-card/90 backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.07)] transition-all">
+                      <div className="flex items-center gap-1">
+                        <span>Customer ID</span>
+                        <ArrowUpDown className={`h-3 w-3 ${sortField === 'id' ? 'text-primary font-bold' : 'text-slate-400'}`} />
+                      </div>
                     </th>
-                    <th onClick={() => handleSort('name')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none">
-                      Customer Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    <th onClick={() => handleSort('name')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none sticky top-0 bg-card/90 backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.07)] transition-all">
+                      <div className="flex items-center gap-1">
+                        <span>Customer Name</span>
+                        <ArrowUpDown className={`h-3 w-3 ${sortField === 'name' ? 'text-primary font-bold' : 'text-slate-400'}`} />
+                      </div>
                     </th>
-                    <th className="p-4">Package</th>
-                    <th onClick={() => handleSort('monthlyCharges')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none text-right">
-                      Charges {sortField === 'monthlyCharges' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    <th className="p-4 sticky top-0 bg-card/90 backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.07)]">Package</th>
+                    <th onClick={() => handleSort('monthlyCharges')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none text-right sticky top-0 bg-card/90 backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.07)] transition-all">
+                      <div className="flex items-center justify-end gap-1">
+                        <span>Charges</span>
+                        <ArrowUpDown className={`h-3 w-3 ${sortField === 'monthlyCharges' ? 'text-primary font-bold' : 'text-slate-400'}`} />
+                      </div>
                     </th>
-                    <th className="p-4">Area &amp; Contact</th>
-                    <th onClick={() => handleSort('connectionDate')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none">
-                      Joined Date {sortField === 'connectionDate' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    <th className="p-4 sticky top-0 bg-card/90 backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.07)]">Area &amp; Contact</th>
+                    <th onClick={() => handleSort('connectionDate')} className="p-4 cursor-pointer hover:bg-secondary/40 select-none sticky top-0 bg-card/90 backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.07)] transition-all">
+                      <div className="flex items-center gap-1">
+                        <span>Joined Date</span>
+                        <ArrowUpDown className={`h-3 w-3 ${sortField === 'connectionDate' ? 'text-primary font-bold' : 'text-slate-400'}`} />
+                      </div>
                     </th>
-                    <th className="p-4">Payment</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 text-center">Actions</th>
+                    <th className="p-4 sticky top-0 bg-card/90 backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.07)]">Payment</th>
+                    <th className="p-4 sticky top-0 bg-card/90 backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.07)]">Status</th>
+                    <th className="p-4 text-center sticky top-0 bg-card/90 backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.07)]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border text-sm">
                   {paginatedCustomers.map((c) => (
-                    <tr key={c.id} className="hover:bg-secondary/20 transition-all duration-150">
+                    <motion.tr 
+                      key={c.id} 
+                      className="hover:bg-secondary/15 transition-all duration-200"
+                      whileHover={{ y: -0.5 }}
+                    >
                       <td className="p-4 font-semibold text-indigo-500">
                         <Link href={`/customers/${c.id}`} className="hover:underline hover:text-indigo-600 transition-colors">
                           {c.id}
@@ -343,9 +363,9 @@ export default function CustomersPage() {
                         </Link>
                       </td>
                       <td className="p-4 text-xs font-medium max-w-[150px] truncate">{c.packageName}</td>
-                      <td className="p-4 text-right font-bold">PKR {c.monthlyCharges}</td>
+                      <td className="p-4 text-right font-bold text-slate-700 dark:text-slate-300">PKR {c.monthlyCharges}</td>
                       <td className="p-4">
-                        <div className="text-xs font-medium text-foreground">{c.phone}</div>
+                        <div className="text-xs font-semibold text-foreground">{c.phone}</div>
                         <div className="text-[11px] text-muted-foreground truncate max-w-[160px]">{c.address}</div>
                       </td>
                       <td className="p-4 text-xs text-muted-foreground">{c.connectionDate}</td>
@@ -361,178 +381,184 @@ export default function CustomersPage() {
                             e.stopPropagation();
                             setActiveMenuRowId(activeMenuRowId === c.id ? null : c.id);
                           }}
-                          className="mx-auto h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold flex items-center justify-center gap-1 transition-all"
+                          className="mx-auto h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 dark:border-border dark:hover:bg-secondary text-xs font-semibold flex items-center justify-center gap-1 transition-all hover:scale-105 active:scale-95"
                         >
                           <span>Actions</span>
                           <span className="text-[9px] text-slate-400">▼</span>
                         </button>
 
-                        {activeMenuRowId === c.id && (
-                          <>
-                            {/* Close menu overlay */}
-                            <div className="fixed inset-0 z-30" onClick={() => setActiveMenuRowId(null)} />
-                            
-                            {/* Dropdown Card */}
-                            <div className="absolute right-4 mt-1 z-40 w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-lg text-left">
-                              <button
-                                onClick={() => {
-                                  router.push(`/customers/${c.id}`);
-                                  setActiveMenuRowId(null);
-                                }}
-                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                        <AnimatePresence>
+                          {activeMenuRowId === c.id && (
+                            <>
+                              {/* Close menu overlay */}
+                              <div className="fixed inset-0 z-30" onClick={() => setActiveMenuRowId(null)} />
+                              
+                              {/* Dropdown Card */}
+                              <motion.div 
+                                initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                                transition={{ duration: 0.15, ease: 'easeOut' }}
+                                className="absolute right-4 mt-1 z-40 w-44 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card p-1 shadow-lg text-left"
                               >
-                                View Profile
-                              </button>
-                              <button
-                                onClick={() => {
-                                  router.push(`/customers/${c.id}?tab=notes`);
-                                  setActiveMenuRowId(null);
-                                }}
-                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                              >
-                                Edit Details
-                              </button>
-                              <button
-                                onClick={() => {
-                                  openRecharge(c.id);
-                                  setActiveMenuRowId(null);
-                                }}
-                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
-                              >
-                                Update Bill
-                              </button>
-                              <button
-                                onClick={() => {
-                                  router.push(`/payments?customerId=${c.id}`);
-                                  setActiveMenuRowId(null);
-                                }}
-                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                              >
-                                Payment History
-                              </button>
-                              {c.connectionStatus === 'Active' ? (
+                                <button
+                                  onClick={() => {
+                                    router.push(`/customers/${c.id}`);
+                                    setActiveMenuRowId(null);
+                                  }}
+                                  className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-secondary transition-colors"
+                                >
+                                  View Profile
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    router.push(`/customers/${c.id}?tab=notes`);
+                                    setActiveMenuRowId(null);
+                                  }}
+                                  className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-secondary transition-colors"
+                                >
+                                  Edit Details
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    openRecharge(c.id);
+                                    setActiveMenuRowId(null);
+                                  }}
+                                  className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+                                >
+                                  Update Bill
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    router.push(`/payments?customerId=${c.id}`);
+                                    setActiveMenuRowId(null);
+                                  }}
+                                  className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-secondary transition-colors"
+                                >
+                                  Payment History
+                                </button>
+                                {c.connectionStatus === 'Active' ? (
+                                  <button
+                                    onClick={() => {
+                                      setConfirmDialog({
+                                        isOpen: true,
+                                        type: 'suspend',
+                                        customerId: c.id,
+                                        customerName: c.name,
+                                      });
+                                      setActiveMenuRowId(null);
+                                    }}
+                                    className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-450 hover:bg-amber-50/50 dark:hover:bg-amber-500/10 transition-colors"
+                                  >
+                                    Suspend Connection
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setConfirmDialog({
+                                        isOpen: true,
+                                        type: 'activate',
+                                        customerId: c.id,
+                                        customerName: c.name,
+                                      });
+                                      setActiveMenuRowId(null);
+                                    }}
+                                    className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-450 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10 transition-colors"
+                                  >
+                                    Activate Connection
+                                  </button>
+                                )}
+                                <div className="h-px bg-slate-100 dark:bg-border my-1" />
                                 <button
                                   onClick={() => {
                                     setConfirmDialog({
                                       isOpen: true,
-                                      type: 'suspend',
+                                      type: 'delete',
                                       customerId: c.id,
                                       customerName: c.name,
                                     });
                                     setActiveMenuRowId(null);
                                   }}
-                                  className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-50/50 transition-colors"
+                                  className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                                 >
-                                  Suspend Connection
+                                  Delete Client
                                 </button>
-                              ) : (
-                                <button
-                                  onClick={() => {
-                                    setConfirmDialog({
-                                      isOpen: true,
-                                      type: 'activate',
-                                      customerId: c.id,
-                                      customerName: c.name,
-                                    });
-                                    setActiveMenuRowId(null);
-                                  }}
-                                  className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-50/50 transition-colors"
-                                >
-                                  Activate Connection
-                                </button>
-                              )}
-                              <div className="h-px bg-slate-100 my-1" />
-                              <button
-                                onClick={() => {
-                                  setConfirmDialog({
-                                    isOpen: true,
-                                    type: 'delete',
-                                    customerId: c.id,
-                                    customerName: c.name,
-                                  });
-                                  setActiveMenuRowId(null);
-                                }}
-                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-55 hover:bg-rose-50 transition-colors"
-                              >
-                                Delete Client
-                              </button>
-                            </div>
-                          </>
-                        )}
+                              </motion.div>
+                            </>
+                          )}
+                        </AnimatePresence>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            {/* Mobile Cards List View */}
-            <div className="md:hidden grid grid-cols-1 gap-4 p-4">
+            {/* Mobile View: Compact vertical list layout, no large cards */}
+            <div className="md:hidden divide-y divide-border overflow-y-auto scrollbar-none">
               {paginatedCustomers.map((c) => (
-                <div key={c.id} className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
-                  <div className="flex justify-between items-start text-left">
-                    <div>
-                      <Link href={`/customers/${c.id}`} className="font-semibold text-foreground hover:underline text-sm">
+                <div key={c.id} className="flex items-center justify-between p-3.5 hover:bg-secondary/15 transition-all duration-150 gap-3">
+                  {/* Left part: ID & Name, Package & Contact info */}
+                  <div className="flex-1 min-w-0 space-y-1 text-left">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-mono font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-1 rounded">
+                        {c.id}
+                      </span>
+                      <Link href={`/customers/${c.id}`} className="font-semibold text-foreground hover:underline text-xs truncate block">
                         {c.name}
                       </Link>
-                      <div className="text-xs text-indigo-500 font-semibold font-mono mt-0.5">{c.id}</div>
                     </div>
-                    <div className="flex gap-1 flex-shrink-0">
-                      <StatusBadge status={c.connectionStatus} />
-                      <StatusBadge status={c.paymentStatus} />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-border/50 py-2.5 my-2 text-left">
-                    <div>
-                      <span className="text-[10px] text-muted-foreground block font-bold uppercase">Package</span>
-                      <span className="font-medium text-foreground">{c.packageName}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[10px] text-muted-foreground block font-bold uppercase">Charges</span>
-                      <span className="font-bold text-foreground">PKR {c.monthlyCharges}</span>
-                    </div>
-                    <div className="mt-1">
-                      <span className="text-[10px] text-muted-foreground block font-bold uppercase">Contact</span>
-                      <span className="font-medium text-foreground">{c.phone}</span>
-                    </div>
-                    <div className="text-right mt-1">
-                      <span className="text-[10px] text-muted-foreground block font-bold uppercase">Area</span>
-                      <span className="font-medium text-foreground">{c.area}</span>
+                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium">
+                      <span className="truncate max-w-[100px]">{c.packageName}</span>
+                      <span>•</span>
+                      <span>{c.phone}</span>
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center gap-2 pt-1">
-                    <Link
-                      href={`/customers/${c.id}`}
-                      className="flex-1 flex h-8 items-center justify-center rounded-xl border border-border bg-card text-xs font-semibold hover:bg-secondary transition-all"
+                  {/* Middle part: Status Badges (Payment Status & Connection Status) */}
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <StatusBadge status={c.paymentStatus} />
+                    <StatusBadge status={c.connectionStatus} />
+                  </div>
+
+                  {/* Right part: Actions Trigger */}
+                  <div className="relative flex-shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenuRowId(activeMenuRowId === c.id ? null : c.id);
+                      }}
+                      className="h-8 w-8 rounded-lg border border-border flex items-center justify-center bg-card hover:bg-secondary text-xs transition-colors hover:scale-105 active:scale-95"
                     >
-                      View Profile
-                    </Link>
-                    
-                    {/* Action Dropdown Trigger for Mobile */}
-                    <div className="relative flex-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveMenuRowId(activeMenuRowId === c.id ? null : c.id);
-                        }}
-                        className="w-full flex h-8 items-center justify-center gap-1.5 rounded-xl bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/95 transition-all"
-                      >
-                        <span>Actions</span>
-                        <span className="text-[9px]">▼</span>
-                      </button>
+                      <span className="text-[9px]">▼</span>
+                    </button>
 
+                    <AnimatePresence>
                       {activeMenuRowId === c.id && (
                         <>
                           <div className="fixed inset-0 z-35" onClick={() => setActiveMenuRowId(null)} />
-                          <div className="absolute right-0 bottom-10 z-40 w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-lg text-left">
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                            transition={{ duration: 0.15, ease: 'easeOut' }}
+                            className="absolute right-0 bottom-10 z-40 w-44 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card p-1 shadow-lg text-left"
+                          >
+                            <button
+                              onClick={() => {
+                                router.push(`/customers/${c.id}`);
+                                setActiveMenuRowId(null);
+                              }}
+                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-secondary transition-colors"
+                            >
+                              View Profile
+                            </button>
                             <button
                               onClick={() => {
                                 router.push(`/customers/${c.id}?tab=notes`);
                                 setActiveMenuRowId(null);
                               }}
-                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-secondary transition-colors"
                             >
                               Edit Details
                             </button>
@@ -541,7 +567,7 @@ export default function CustomersPage() {
                                 openRecharge(c.id);
                                 setActiveMenuRowId(null);
                               }}
-                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
+                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
                             >
                               Update Bill
                             </button>
@@ -550,7 +576,7 @@ export default function CustomersPage() {
                                 router.push(`/payments?customerId=${c.id}`);
                                 setActiveMenuRowId(null);
                               }}
-                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-secondary transition-colors"
                             >
                               Payment History
                             </button>
@@ -565,7 +591,7 @@ export default function CustomersPage() {
                                   });
                                   setActiveMenuRowId(null);
                                 }}
-                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-amber-600 hover:bg-amber-50/50 transition-colors"
+                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-455 hover:bg-amber-50/50 dark:hover:bg-amber-500/10 transition-colors"
                               >
                                 Suspend Connection
                               </button>
@@ -580,30 +606,30 @@ export default function CustomersPage() {
                                   });
                                   setActiveMenuRowId(null);
                                 }}
-                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-50/50 transition-colors"
+                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-455 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10 transition-colors"
                               >
                                 Activate Connection
                               </button>
                             )}
-                            <div className="h-px bg-slate-100 my-1" />
+                            <div className="h-px bg-slate-100 dark:bg-border my-1" />
                             <button
                               onClick={() => {
-                                setConfirmDialog({
-                                  isOpen: true,
-                                  type: 'delete',
-                                  customerId: c.id,
-                                  customerName: c.name,
-                                });
-                                setActiveMenuRowId(null);
+                                  setConfirmDialog({
+                                    isOpen: true,
+                                    type: 'delete',
+                                    customerId: c.id,
+                                    customerName: c.name,
+                                  });
+                                  setActiveMenuRowId(null);
                               }}
-                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                             >
                               Delete Client
                             </button>
-                          </div>
+                          </motion.div>
                         </>
                       )}
-                    </div>
+                    </AnimatePresence>
                   </div>
                 </div>
               ))}

@@ -20,6 +20,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[LoginPage.handleLogin] Form submit triggered. Email:', email);
     setIsLoading(true);
     setError(null);
 
@@ -28,10 +29,15 @@ export default function LoginPage() {
       const username = email.includes('@') ? email.split('@')[0] : email;
       const cleanPassword = password || 'shahid123'; // Default fallback if they left unchanged
       
+      console.log('[LoginPage.handleLogin] Resolved credentials - Username:', username);
+      console.log('[LoginPage.handleLogin] Calling authService.login()...');
       const res = await authService.login(username, cleanPassword);
+      console.log('[LoginPage.handleLogin] Login succeeded, access token:', res?.access_token);
       localStorage.setItem('fnb_access_token', res.access_token);
       
+      console.log('[LoginPage.handleLogin] Fetching user info via getMe()...');
       const me = await authService.getMe();
+      console.log('[LoginPage.handleLogin] User info fetched successfully:', me);
       const userSession = {
         name: me.fullName,
         role: me.role.name as 'Super Admin' | 'Sub Admin',
@@ -47,6 +53,7 @@ export default function LoginPage() {
         router.push('/');
       }, 1500);
     } catch (err: unknown) {
+      console.error('[LoginPage.handleLogin] Login sequence failed with error:', err);
       setIsLoading(false);
       
       let errorMessage = "Authentication failed. Please verify credentials.";

@@ -3,6 +3,8 @@ import uuid
 import shutil
 from typing import Optional
 from datetime import datetime, timedelta
+from backend.app.core.config import settings
+
 
 # Try loading boto3, otherwise handle gracefully
 BOTO3_AVAILABLE = False
@@ -61,7 +63,7 @@ def upload_to_storage(file_content, filename: str, content_type: str) -> str:
             print(f"S3 upload failed, falling back to local: {e}")
             
     # Local fallback
-    UPLOAD_DIR = "backend/static/uploads"
+    UPLOAD_DIR = settings.UPLOAD_DIR
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     file_path = os.path.join(UPLOAD_DIR, unique_name)
     with open(file_path, "wb") as buffer:

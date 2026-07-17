@@ -1,12 +1,133 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, Mail, Lock, Eye, EyeOff, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LogoLoader from '@/components/ui/LogoLoader';
 import { useBillingSystem } from '@/lib/context';
 import { authService } from '@/services/auth';
+
+const FiberOpticBackground = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationId: number;
+    let width = (canvas.width = canvas.offsetWidth);
+    let height = (canvas.height = canvas.offsetHeight);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = canvas.offsetWidth;
+      height = canvas.height = canvas.offsetHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    const nodeCount = 45;
+    const nodes: { x: number; y: number; vx: number; vy: number; radius: number }[] = [];
+    for (let i = 0; i < nodeCount; i++) {
+      nodes.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        radius: Math.random() * 2 + 1.2,
+      });
+    }
+
+    const pulses: { from: number; to: number; progress: number; speed: number }[] = [];
+
+    const draw = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw floating nodes (Indigo particles)
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.7)';
+      ctx.shadowBlur = 4;
+      ctx.shadowColor = 'rgba(99, 102, 241, 0.5)';
+      nodes.forEach((node) => {
+        node.x += node.vx;
+        node.y += node.vy;
+
+        if (node.x < 0 || node.x > width) node.vx *= -1;
+        if (node.y < 0 || node.y > height) node.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.shadowBlur = 0;
+
+      // Draw connecting wires (lines between adjacent nodes)
+      ctx.strokeStyle = 'rgba(99, 102, 241, 0.16)';
+      ctx.lineWidth = 1;
+
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 180) {
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.stroke();
+
+            // Occasionally spawn data pulses
+            if (Math.random() < 0.0004 && pulses.length < 15) {
+              pulses.push({
+                from: i,
+                to: j,
+                progress: 0,
+                speed: Math.random() * 0.01 + 0.005,
+              });
+            }
+          }
+        }
+      }
+
+      // Draw glowing light pulses
+      pulses.forEach((pulse, idx) => {
+        pulse.progress += pulse.speed;
+        if (pulse.progress >= 1) {
+          pulses.splice(idx, 1);
+          return;
+        }
+
+        const p1 = nodes[pulse.from];
+        const p2 = nodes[pulse.to];
+        if (p1 && p2) {
+          const x = p1.x + (p2.x - p1.x) * pulse.progress;
+          const y = p1.y + (p2.y - p1.y) * pulse.progress;
+
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.fillStyle = '#059669'; // Glowing Emerald
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#059669';
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      });
+
+      animationId = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none block z-0 animate-fade-in" />;
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -107,14 +228,16 @@ export default function LoginPage() {
   return (
     <div 
       className="min-h-screen w-screen flex flex-col sm:flex-row bg-slate-50 text-slate-900 font-sans relative overflow-y-auto sm:overflow-hidden select-none"
-      style={{ backgroundImage: 'radial-gradient(#e2e8f0 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }}
     >
-      {/* Soft background radial gradients for modern visual depth */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-blue-500/5 blur-[120px] pointer-events-none z-0" />
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none z-0" />
+      {/* Premium animated canvas background (restoring floating nodes, glowing dots, and connection lines) */}
+      <FiberOpticBackground />
 
-      {/* LEFT PANEL: Branding & Taglines (50% on Desktop, 60% on Tablet, Hidden/Stacked on Mobile) */}
-      <div className="w-full sm:w-[60%] lg:w-1/2 flex flex-col justify-between p-8 sm:p-12 md:p-16 border-b sm:border-b-0 sm:border-r border-slate-200/60 relative z-10 bg-gradient-to-br from-white/80 via-slate-50/50 to-transparent backdrop-blur-[2px]">
+      {/* Decorative gradient color overlay blur circles */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none z-0" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none z-0" />
+
+      {/* LEFT PANEL: Branding & Taglines (Restoring original layout, original transitions, and spacing) */}
+      <div className="w-full sm:w-[60%] lg:w-1/2 flex flex-col justify-between p-8 sm:p-12 md:p-16 border-b sm:border-b-0 sm:border-r border-slate-200/60 relative z-10 bg-gradient-to-br from-white/90 via-slate-50/60 to-transparent backdrop-blur-[3px]">
         {/* Top Header */}
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-500 p-0.5 shadow-md shadow-indigo-500/10">
@@ -174,10 +297,9 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* RIGHT PANEL: Modern Login Form Card */}
+      {/* RIGHT PANEL: Modern Centered Login Form Card */}
       <div className="w-full sm:w-[40%] lg:w-1/2 flex items-center justify-center p-6 sm:p-8 md:p-12 relative z-10 min-h-screen">
         <AnimatePresence mode="wait">
-          {/* Modern Login Card */}
           <motion.div
             key="login-card"
             initial={{ opacity: 0, y: 15 }}

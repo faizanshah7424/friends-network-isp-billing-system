@@ -1,6 +1,21 @@
 # Railway Backend Production Deployment Report
 
-This report outlines the modifications made to prepare the FastAPI backend of the **Friends Network ISP Billing System** for production deployment on Railway, as well as the environment configuration and remaining deployment steps.
+This report outlines the modifications made to prepare the FastAPI backend of the **Friends Network ISP Billing System** for production deployment on Railway, as well as the environment configuration, build issue resolution, and remaining deployment steps.
+
+---
+
+## 🛠️ Build Failure Resolution (Python 3.13 & `psycopg2-binary`)
+
+### **Root Cause of the Failure**
+- The backend container utilizes Python 3.13 (`python:3.13-slim`).
+- The original dependency `psycopg2-binary==2.9.9` was released prior to the release of Python 3.13. 
+- Python 3.13 removed several deprecated internal C API symbols. When `pip` attempted to install `psycopg2-binary==2.9.9`, it failed to find a pre-compiled binary wheel matching Python 3.13, falling back to compile from source.
+- Source compilation failed due to the missing C API symbols in Python 3.13.
+
+### **The Fix**
+- We upgraded `psycopg2-binary` to version `2.9.10` in `backend/requirements.txt`.
+- `psycopg2-binary==2.9.10` has full compatibility with Python 3.13, resolves the deprecated symbols, and provides pre-compiled wheels.
+- `pip` now installs it directly without attempting compilation, fixing the Railway Docker build pipeline.
 
 ---
 
@@ -8,14 +23,16 @@ This report outlines the modifications made to prepare the FastAPI backend of th
 
 The following files under the `backend` directory were modified to ensure cloud production readiness, PostgreSQL database compatibility, trusted proxy headers, dynamic CORS, static file verification, connection pooling, and automated migrations:
 
-1. **[backend/app/core/config.py](file:///E:/friends-network-ISP-billing-system/backend/app/core/config.py)**:
+1. **[backend/requirements.txt](file:///E:/friends-network-ISP-billing-system/backend/requirements.txt)**:
+   - Upgraded `psycopg2-binary==2.9.9` to `psycopg2-binary==2.9.10`.
+2. **[backend/app/core/config.py](file:///E:/friends-network-ISP-billing-system/backend/app/core/config.py)**:
    - Support for all required Phase 3 environment variables.
    - Dynamic database URL auto-conversion (converts `postgres://` to `postgresql://` for SQLAlchemy compatibility).
    - Dynamic CORS origin compiler including localhost, `127.0.0.1`, and values from the `FRONTEND_URL` environment variable.
    - Configuration fields for database connection pooling.
-2. **[backend/app/database/session.py](file:///E:/friends-network-ISP-billing-system/backend/app/database/session.py)**:
+3. **[backend/app/database/session.py](file:///E:/friends-network-ISP-billing-system/backend/app/database/session.py)**:
    - Configured SQLAlchemy engine to use connection pooling parameters (`pool_size`, `max_overflow`, `pool_recycle`) and pre-ping checks (`pool_pre_ping=True`) for non-SQLite databases to ensure robust reconnect handling.
-3. **[backend/app/main.py](file:///E:/friends-network-ISP-billing-system/backend/app/main.py)**:
+4. **[backend/app/main.py](file:///E:/friends-network-ISP-billing-system/backend/app/main.py)**:
    - Added production logging setup matching `settings.LOG_LEVEL`.
    - Setup global exception handling to prevent leaking internals in production.
    - Programmatic Alembic database migration execution during startup (`command.upgrade(alembic_cfg, "head")`).
@@ -23,9 +40,9 @@ The following files under the `backend` directory were modified to ensure cloud 
    - Graceful shutdown hook to cleanly close the database connection pool (`engine.dispose()`).
    - Root-level `GET /health` endpoint returning `status`, `database` status, `version`, and computed `uptime`.
    - Creation verification of static subfolders (`uploads/`, `documents/`, `logos/`, `receipts/`) inside the static directory.
-4. **[backend/app/core/s3.py](file:///E:/friends-network-ISP-billing-system/backend/app/core/s3.py)**:
+5. **[backend/app/core/s3.py](file:///E:/friends-network-ISP-billing-system/backend/app/core/s3.py)**:
    - Replaced hardcoded fallback local upload directory with `settings.UPLOAD_DIR`.
-5. **[backend/Dockerfile](file:///E:/friends-network-ISP-billing-system/backend/Dockerfile)**:
+6. **[backend/Dockerfile](file:///E:/friends-network-ISP-billing-system/backend/Dockerfile)**:
    - Updated the Docker start command (`CMD`) to run in a shell context to parse Railway's dynamic `PORT` variable and include trusted proxy headers.
 
 ---

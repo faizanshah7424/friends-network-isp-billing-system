@@ -34,8 +34,10 @@ def _add_tenant_filter(execute_state):
         if execute_state.is_select and hasattr(execute_state.statement, "options"):
             execute_state.statement = execute_state.statement.options(
                 with_loader_criteria(
+                    Base,
                     lambda cls: cls.tenant_id == tenant_id if hasattr(cls, "tenant_id") else True,
-                    include_aliases=True
+                    include_aliases=True,
+                    track_closure_variables=False
                 )
             )
 

@@ -4,15 +4,22 @@ This report outlines the modifications made to prepare the FastAPI backend of th
 
 ---
 
-## 🛠️ Build & Runtime Issue Resolutions under Python 3.13
+## 🛠️ Build & Runtime Issue Resolutions
 
 ### **1. Build Failure Resolution (`psycopg2-binary`)**
 - **Root Cause:** The backend container utilizes Python 3.13 (`python:3.13-slim`). The original dependency `psycopg2-binary==2.9.9` was released prior to the release of Python 3.13. Python 3.13 removed several deprecated internal C API symbols. When `pip` attempted to install `psycopg2-binary==2.9.9`, it failed to find a pre-compiled binary wheel matching Python 3.13, falling back to compile from source. Source compilation failed due to the missing C API symbols in Python 3.13.
 - **The Fix:** We upgraded `psycopg2-binary` to version `2.9.10` in `backend/requirements.txt`. Version `2.9.10` has full compatibility with Python 3.13 and provides pre-compiled wheels, which install directly without compilation.
 
 ### **2. Runtime NameError Resolution (Lazy Type Annotations)**
-- **Root Cause:** In Python 3.13, PEP 649 (lazy evaluation of type annotations) defer annotation execution. This meant the module `backend/app/api/endpoints/customer.py` successfully imported because type annotations containing `Optional` were not evaluated at definition time. However, when FastAPI and Pydantic generated the OpenAPI schemas on startup, they triggered the annotation evaluation, raising a runtime `NameError: name 'Optional' is not defined` because `Optional` was never imported from the `typing` library.
+- **Root Cause:** In Python 3.13, PEP 649 (lazy evaluation of type annotations) defers annotation execution. This meant the module `backend/app/api/endpoints/customer.py` successfully imported because type annotations containing `Optional` were not evaluated at definition time. However, when FastAPI and Pydantic generated the OpenAPI schemas on startup, they triggered the annotation evaluation, raising a runtime `NameError: name 'Optional' is not defined` because `Optional` was never imported from the `typing` library.
 - **The Fix:** We added `Optional` to the typing imports in `backend/app/api/endpoints/customer.py` (`from typing import List, Optional`). The FastAPI OpenAPI schema generator now successfully parses all annotations and launches with zero runtime NameErrors.
+
+### **3. SQLAlchemy Multi-Tenancy TypeError/InvalidRequestError Resolution**
+- **Root Cause:** In `backend/app/database/session.py`, the `_add_tenant_filter` ORM listener intercepts queries to filter them by tenant. There were two bugs in the `with_loader_criteria` hook usage:
+  1. The positional argument `Base` (the target declarative base to filter) was missing. This caused `TypeError: with_loader_criteria() missing 1 required positional argument: 'where_criteria'` on every database select query.
+  2. The query filter lambda uses `tenant_id` which is a local closure variable. Because SQLAlchemy caches compiled query structures, it attempts to track closure variables. Since `tenant_id` is a dynamic context-resolved string, it raised `sqlalchemy.exc.InvalidRequestError` stating that it does not refer to a cacheable SQL element.
+  This crashed the database layer on every single query when the application was accessed with external Host headers (like Railway's domains) that forced a database tenant resolution.
+- **The Fix:** We modified the call to `with_loader_criteria` to explicitly pass `Base` as the target class and added `track_closure_variables=False` to prevent query caching failures.
 
 ---
 
@@ -24,13 +31,14 @@ The following files under the `backend` directory were modified to ensure cloud 
    - Upgraded `psycopg2-binary==2.9.9` to `psycopg2-binary==2.9.10`.
 2. **[backend/app/api/endpoints/customer.py](file:///E:/friends-network-ISP-billing-system/backend/app/api/endpoints/customer.py)**:
    - Added missing `Optional` import from the `typing` module to resolve runtime PEP 649 NameErrors.
-3. **[backend/app/core/config.py](file:///E:/friends-network-ISP-billing-system/backend/app/core/config.py)**:
+3. **[backend/app/database/session.py](file:///E:/friends-network-ISP-billing-system/backend/app/database/session.py)**:
+   - Configured SQLAlchemy engine to use connection pooling parameters (`pool_size`, `max_overflow`, `pool_recycle`) and pre-ping checks (`pool_pre_ping=True`) for non-SQLite databases to ensure robust reconnect handling.
+   - Fixed `with_loader_criteria` call in multi-tenancy filter to pass `Base` and `track_closure_variables=False`.
+4. **[backend/app/core/config.py](file:///E:/friends-network-ISP-billing-system/backend/app/core/config.py)**:
    - Support for all required Phase 3 environment variables.
    - Dynamic database URL auto-conversion (converts `postgres://` to `postgresql://` for SQLAlchemy compatibility).
    - Dynamic CORS origin compiler including localhost, `127.0.0.1`, and values from the `FRONTEND_URL` environment variable.
    - Configuration fields for database connection pooling.
-4. **[backend/app/database/session.py](file:///E:/friends-network-ISP-billing-system/backend/app/database/session.py)**:
-   - Configured SQLAlchemy engine to use connection pooling parameters (`pool_size`, `max_overflow`, `pool_recycle`) and pre-ping checks (`pool_pre_ping=True`) for non-SQLite databases to ensure robust reconnect handling.
 5. **[backend/app/main.py](file:///E:/friends-network-ISP-billing-system/backend/app/main.py)**:
    - Added production logging setup matching `settings.LOG_LEVEL`.
    - Setup global exception handling to prevent leaking internals in production.
@@ -105,7 +113,8 @@ Once the repository is pushed, Railway will automatically trigger a build, insta
 
 Before finishing, the following details were verified:
 - [x] **Backend builds successfully:** Checked using `check_imports.py` to ensure all python files import correctly with no compilation errors.
-- [x] **FastAPI starts successfully:** Programmatically validated OpenAPI generation locally under Python 3.13, ensuring zero runtime annotation NameErrors.
+- [x] **FastAPI starts successfully:** Programmatically validated OpenAPI generation locally under Python 3.13, ensuring zero runtime NameErrors.
+- [x] **Endpoints return HTTP 200:** Validated root (`/`) and health check (`/health`) endpoints returning 200 under simulated production Host headers.
 - [x] **No TypeScript changes:** Zero frontend files or `.ts`/`.tsx` files modified.
 - [x] **No frontend changes:** No styling, components, or UI files changed.
 - [x] **No schema changes:** Database model structures and existing migration revisions are kept intact.

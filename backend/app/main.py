@@ -216,8 +216,8 @@ def read_root():
     return {
         "status": "online",
         "project": settings.PROJECT_NAME,
-        "version": "4.2.1",
-        "build_id": "v4.2.1-typography-contrast-fixed",
+        "version": "4.2.2",
+        "build_id": "v4.2.2-translucency-overlay-fixed",
         "documentation": "/docs"
     }
 

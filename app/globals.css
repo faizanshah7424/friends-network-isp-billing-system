@@ -148,16 +148,14 @@ aside a:not(.bg-primary):hover, .aside a:not(.bg-primary):hover {
   color: #0f172a !important;
 }
 
-header, .sticky.top-0 {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+header {
+  background-color: #ffffff !important;
   border-bottom: 1px solid var(--border) !important;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03) !important;
 }
 
 /* Navbar Search Bar input styling */
-header input[type="text"], .sticky.top-0 input[type="text"] {
+header input[type="text"] {
   border: 1px solid var(--border) !important;
   background-color: #ffffff !important;
   color: #0f172a !important;
@@ -165,7 +163,7 @@ header input[type="text"], .sticky.top-0 input[type="text"] {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-header input[type="text"]:focus, .sticky.top-0 input[type="text"]:focus {
+header input[type="text"]:focus {
   border-color: var(--primary) !important;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
 }
@@ -335,43 +333,10 @@ input:focus, select:focus, textarea:focus {
 
 /* Premium Micro-Animations System */
 
-/* Cards gentle fade-in & slide-up */
-.bg-card, [class*="bg-card"], .card {
-  will-change: transform, opacity;
-  animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes cardEntrance {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Table rows slide-up & stagger */
+/* Hover transitions */
 table tbody tr {
-  will-change: transform, opacity;
-  opacity: 0;
-  transform: translateY(8px);
-  animation: trEntrance 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: background-color 0.15s ease;
 }
-
-@keyframes trEntrance {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-table tbody tr:nth-child(1) { animation-delay: 0.04s; }
-table tbody tr:nth-child(2) { animation-delay: 0.08s; }
-table tbody tr:nth-child(3) { animation-delay: 0.12s; }
-table tbody tr:nth-child(4) { animation-delay: 0.16s; }
-table tbody tr:nth-child(5) { animation-delay: 0.2s; }
 
 /* Sidebar Navigation Items softly zoom/scale icon on hover */
 aside a:hover svg, .aside a:hover svg {

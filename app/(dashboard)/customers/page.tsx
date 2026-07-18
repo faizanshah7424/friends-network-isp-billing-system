@@ -314,36 +314,36 @@ export default function CustomersPage() {
             <div className="hidden md:block overflow-x-auto max-h-[600px] overflow-y-auto scrollbar-thin">
               <table className="w-full text-left border-collapse relative">
                 <thead>
-                  <tr className="border-b border-slate-300 dark:border-border bg-slate-100 dark:bg-secondary/30 text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                    <th onClick={() => handleSort('id')} className="p-4 cursor-pointer hover:bg-slate-200/50 select-none sticky top-0 bg-slate-100 dark:bg-card backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)] transition-all">
+                  <tr className="border-b border-slate-300 bg-slate-100 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    <th onClick={() => handleSort('id')} className="p-4 cursor-pointer hover:bg-slate-200/50 select-none sticky top-0 bg-slate-100 z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)] transition-all">
                       <div className="flex items-center gap-1">
                         <span>Customer ID</span>
                         <ArrowUpDown className={`h-3 w-3 ${sortField === 'id' ? 'text-primary font-bold' : 'text-slate-400'}`} />
                       </div>
                     </th>
-                    <th onClick={() => handleSort('name')} className="p-4 cursor-pointer hover:bg-slate-200/50 select-none sticky top-0 bg-slate-100 dark:bg-card backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)] transition-all">
+                    <th onClick={() => handleSort('name')} className="p-4 cursor-pointer hover:bg-slate-200/50 select-none sticky top-0 bg-slate-100 z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)] transition-all">
                       <div className="flex items-center gap-1">
                         <span>Customer Name</span>
                         <ArrowUpDown className={`h-3 w-3 ${sortField === 'name' ? 'text-primary font-bold' : 'text-slate-400'}`} />
                       </div>
                     </th>
-                    <th className="p-4 sticky top-0 bg-slate-100 dark:bg-card backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)]">Package</th>
-                    <th onClick={() => handleSort('monthlyCharges')} className="p-4 cursor-pointer hover:bg-slate-200/50 select-none text-right sticky top-0 bg-slate-100 dark:bg-card backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)] transition-all">
+                    <th className="p-4 sticky top-0 bg-slate-100 z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)]">Package</th>
+                    <th onClick={() => handleSort('monthlyCharges')} className="p-4 cursor-pointer hover:bg-slate-200/50 select-none text-right sticky top-0 bg-slate-100 z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)] transition-all">
                       <div className="flex items-center justify-end gap-1">
                         <span>Charges</span>
                         <ArrowUpDown className={`h-3 w-3 ${sortField === 'monthlyCharges' ? 'text-primary font-bold' : 'text-slate-400'}`} />
                       </div>
                     </th>
-                    <th className="p-4 sticky top-0 bg-slate-100 dark:bg-card backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)]">Area &amp; Contact</th>
-                    <th onClick={() => handleSort('connectionDate')} className="p-4 cursor-pointer hover:bg-slate-200/50 select-none sticky top-0 bg-slate-100 dark:bg-card backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)] transition-all">
+                    <th className="p-4 sticky top-0 bg-slate-100 z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)]">Area &amp; Contact</th>
+                    <th onClick={() => handleSort('connectionDate')} className="p-4 cursor-pointer hover:bg-slate-200/50 select-none sticky top-0 bg-slate-100 z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)] transition-all">
                       <div className="flex items-center gap-1">
                         <span>Joined Date</span>
                         <ArrowUpDown className={`h-3 w-3 ${sortField === 'connectionDate' ? 'text-primary font-bold' : 'text-slate-400'}`} />
                       </div>
                     </th>
-                    <th className="p-4 sticky top-0 bg-slate-100 dark:bg-card backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)]">Payment</th>
-                    <th className="p-4 sticky top-0 bg-slate-100 dark:bg-card backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)]">Status</th>
-                    <th className="p-4 text-center sticky top-0 bg-slate-100 dark:bg-card backdrop-blur-md z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)]">Actions</th>
+                    <th className="p-4 sticky top-0 bg-slate-100 z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)]">Payment</th>
+                    <th className="p-4 sticky top-0 bg-slate-100 z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)]">Status</th>
+                    <th className="p-4 text-center sticky top-0 bg-slate-100 z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-border text-sm">

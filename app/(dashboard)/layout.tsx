@@ -98,14 +98,7 @@ export default function DashboardGroupLayout({
         
         {/* Scrollable page canvas with page transitions */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-background">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={pathname}
-              initial={{ opacity: 0, scale: 0.99 }}
-              animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: 'easeInOut' } }}
-              exit={{ opacity: 0, scale: 0.99, transition: { duration: 0.15, ease: 'easeInOut' } }}
-              className="mx-auto max-w-7xl space-y-6"
-            >
+          <div className="mx-auto max-w-7xl space-y-6">
               {isRestricted ? (
                 <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6 space-y-6">
                   <div className="h-16 w-16 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 border border-rose-500/20 shadow-lg shadow-rose-500/5 animate-pulse">
@@ -129,8 +122,7 @@ export default function DashboardGroupLayout({
               ) : (
                 children
               )}
-            </motion.div>
-          </AnimatePresence>
+          </div>
         </main>
       </div>
       <RechargeDialog />

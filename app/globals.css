@@ -36,7 +36,7 @@
 
 :root {
   --background: #f8fafc;
-  --foreground: #0f172a;
+  --foreground: #0f172a; /* Deep Slate-900 */
   
   --card: #ffffff;
   --card-foreground: #0f172a;
@@ -51,7 +51,7 @@
   --secondary-foreground: #ffffff;
   
   --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted-foreground: #334155; /* Crisp Dark Slate-700 (Elevated from faint #64748b for high contrast) */
   
   --accent: #06b6d4; /* Cyan */
   --accent-foreground: #ffffff;
@@ -59,7 +59,7 @@
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   
-  --border: #e2e8f0; /* Crisp Slate Border */
+  --border: #cbd5e1; /* Clear Slate-300 Border */
   --input: #ffffff;  /* White input bg */
   --ring: #2563eb;
   
@@ -75,11 +75,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.15);
+  background: rgba(51, 65, 85, 0.25);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.3);
+  background: rgba(51, 65, 85, 0.45);
 }
 
 /* Premium SaaS Design System Overrides */
@@ -90,17 +90,27 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
+/* Headings High Contrast Global Override */
+h1, h2, h3, h4, h5, h6 {
+  color: #0f172a !important;
+}
+
+/* Descriptions & Subtitles High Contrast */
+.text-muted-foreground {
+  color: #334155 !important;
+}
+
 .glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(203, 213, 225, 0.6);
 }
 
 /* Cards styling and lift */
 .bg-card, [class*="bg-card"], .card {
   border: 1px solid var(--border) !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px 0 rgba(0, 0, 0, 0.02) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02) !important;
   border-radius: var(--radius) !important;
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease !important;
 }
@@ -109,8 +119,8 @@ body {
 [class*="bg-card"]:not([class*="fixed"]):not([class*="absolute"]):not([class*="z-50"]):hover, 
 .card:hover {
   transform: translateY(-2px);
-  border-color: #cbd5e1 !important;
-  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.02) !important;
+  border-color: #94a3b8 !important;
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.03) !important;
 }
 
 /* Sidebar layout styling */
@@ -134,29 +144,30 @@ aside a.bg-primary, .aside a.bg-primary {
 
 /* Sidebar inactive nav item hover: soft gray background */
 aside a:not(.bg-primary):hover, .aside a:not(.bg-primary):hover {
-  background-color: var(--muted) !important;
-  color: var(--foreground) !important;
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
 }
 
 header, .sticky.top-0 {
-  background-color: rgba(255, 255, 255, 0.8) !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   border-bottom: 1px solid var(--border) !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02) !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03) !important;
 }
 
 /* Navbar Search Bar input styling */
 header input[type="text"], .sticky.top-0 input[type="text"] {
   border: 1px solid var(--border) !important;
   background-color: #ffffff !important;
+  color: #0f172a !important;
   border-radius: 9999px !important; /* Fully rounded search bar */
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 header input[type="text"]:focus, .sticky.top-0 input[type="text"]:focus {
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
 }
 
 /* Rounded, smooth hover buttons */
@@ -170,11 +181,12 @@ button.border, a.btn.border, [class*="border border-border"] {
   border-radius: 12px !important;
   background-color: #ffffff !important;
   border-color: var(--border) !important;
+  color: #0f172a !important;
 }
 
 button.border:hover, a.btn.border:hover {
-  background-color: var(--muted) !important;
-  border-color: #cbd5e1 !important;
+  background-color: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
 }
 
 /* Tables rounded container and borders */
@@ -182,7 +194,7 @@ button.border:hover, a.btn.border:hover {
   border-radius: 16px !important;
   border: 1px solid var(--border) !important;
   background-color: #ffffff !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03) !important;
 }
 
 table {
@@ -192,9 +204,9 @@ table {
 }
 
 table th {
-  background-color: #f8fafc !important;
-  color: var(--muted-foreground) !important;
-  font-weight: 600 !important;
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important; /* Bold Slate-800 for high-contrast headers */
+  font-weight: 700 !important;
   font-size: 0.75rem !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
@@ -206,6 +218,8 @@ table td {
   padding: 14px 16px !important;
   border-bottom: 1px solid var(--border) !important;
   font-size: 0.875rem !important;
+  color: #0f172a !important; /* Solid Slate-900 text for all table content */
+  font-weight: 500 !important;
   transition: background-color 0.15s ease !important;
 }
 
@@ -226,10 +240,17 @@ input[type="text"], input[type="number"], input[type="email"], input[type="passw
   border-radius: 12px !important;
   border: 1px solid var(--border) !important;
   background-color: #ffffff !important;
+  color: #0f172a !important;
+  font-weight: 500 !important;
   padding: 10px 14px !important;
   font-size: 0.875rem !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
   outline: none !important;
+}
+
+input::placeholder, select::placeholder, textarea::placeholder {
+  color: #475569 !important; /* Slate-600 crisp placeholder */
+  font-weight: 500 !important;
 }
 
 input:focus, select:focus, textarea:focus {

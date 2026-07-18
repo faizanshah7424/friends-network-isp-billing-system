@@ -72,15 +72,10 @@ def validate_startup_settings():
 def seed_database_if_empty():
     db = SessionLocal()
     try:
-        from backend.app.models.user import User
-        user_count = db.query(User).count()
-        if user_count == 0:
-            logger.info("Users table is empty. Running database seed...")
-            from backend.app.seed.seed import seed_db
-            seed_db()
-            logger.info("Database seed completed successfully.")
-        else:
-            logger.info("Database already contains users. Skipping seed.")
+        logger.info("Running database seed & admin credential synchronization...")
+        from backend.app.seed.seed import seed_db
+        seed_db()
+        logger.info("Database seed and admin credential sync completed successfully.")
     except Exception as e:
         logger.error(f"Error seeding database on startup: {e}")
     finally:

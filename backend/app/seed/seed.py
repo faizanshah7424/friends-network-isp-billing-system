@@ -45,24 +45,40 @@ def seed_db():
         db.refresh(sub_admin_role)
 
         # 2. Seed Admin Users
-        shahid_user = db.query(User).filter(User.username == "muhammad_shahid").first()
+        shahid_user = db.query(User).execution_options(bypass_tenant=True).filter(User.username == "muhammad_shahid").first()
         if not shahid_user:
             shahid_user = User(
                 username="muhammad_shahid",
                 full_name="Muhammad Shahid",
                 password_hash=get_password_hash("shahid123"),
-                role_id=super_admin_role.id
+                role_id=super_admin_role.id,
+                tenant_id="friends_network",
+                is_active=True
             )
             db.add(shahid_user)
+        else:
+            shahid_user.password_hash = get_password_hash("shahid123")
+            shahid_user.is_active = True
+            if not getattr(shahid_user, "tenant_id", None):
+                shahid_user.tenant_id = "friends_network"
+            db.add(shahid_user)
             
-        noor_user = db.query(User).filter(User.username == "noor_jamal").first()
+        noor_user = db.query(User).execution_options(bypass_tenant=True).filter(User.username == "noor_jamal").first()
         if not noor_user:
             noor_user = User(
                 username="noor_jamal",
                 full_name="Noor Jamal",
                 password_hash=get_password_hash("noor123"),
-                role_id=sub_admin_role.id
+                role_id=sub_admin_role.id,
+                tenant_id="friends_network",
+                is_active=True
             )
+            db.add(noor_user)
+        else:
+            noor_user.password_hash = get_password_hash("noor123")
+            noor_user.is_active = True
+            if not getattr(noor_user, "tenant_id", None):
+                noor_user.tenant_id = "friends_network"
             db.add(noor_user)
             
         # 3. Seed Packages

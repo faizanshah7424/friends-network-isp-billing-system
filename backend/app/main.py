@@ -216,7 +216,8 @@ def read_root():
     return {
         "status": "online",
         "project": settings.PROJECT_NAME,
-        "version": "4.0.0",
+        "version": "4.0.1",
+        "build_id": "v4.0.1-auth-sync",
         "documentation": "/docs"
     }
 

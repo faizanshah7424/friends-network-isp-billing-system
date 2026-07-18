@@ -21,11 +21,15 @@ from backend.app.models.tenant import Tenant
 
 def seed_db():
     db = SessionLocal()
+    
+    # Ensure database tables exist
     try:
-        # Ensure database tables exist
         Base.metadata.create_all(bind=engine)
-        
-        # 0. Seed Default Tenant
+    except Exception as e:
+        print(f"Error running create_all: {e}")
+    
+    # 0. Seed Default Tenant
+    try:
         tenant_obj = db.query(Tenant).filter(Tenant.id == "friends_network").first()
         if not tenant_obj:
             tenant_obj = Tenant(
@@ -44,32 +48,43 @@ def seed_db():
             )
             db.add(tenant_obj)
             db.commit()
-            db.refresh(tenant_obj)
+    except Exception as e:
+        db.rollback()
+        print(f"Error seeding tenant: {e}")
 
-        # 1. Seed Roles
+    # 1. Seed Roles
+    super_admin_role_id = "cae6f7e9-fd17-44d4-b1eb-ac2eea6201ac"
+    sub_admin_role_id = "927950e6-a55c-4edb-804f-c1ba3888cfd1"
+    try:
         super_admin_role = db.query(Role).filter(Role.name == "Super Admin").first()
         if not super_admin_role:
             super_admin_role = Role(
-                id="cae6f7e9-fd17-44d4-b1eb-ac2eea6201ac",
+                id=super_admin_role_id,
                 name="Super Admin",
                 permissions=["all"]
             )
             db.add(super_admin_role)
             db.commit()
-            db.refresh(super_admin_role)
+        else:
+            super_admin_role_id = super_admin_role.id
             
         sub_admin_role = db.query(Role).filter(Role.name == "Sub Admin").first()
         if not sub_admin_role:
             sub_admin_role = Role(
-                id="927950e6-a55c-4edb-804f-c1ba3888cfd1",
+                id=sub_admin_role_id,
                 name="Sub Admin",
                 permissions=["recovery", "payments", "complaints", "customer_view"]
             )
             db.add(sub_admin_role)
             db.commit()
-            db.refresh(sub_admin_role)
+        else:
+            sub_admin_role_id = sub_admin_role.id
+    except Exception as e:
+        db.rollback()
+        print(f"Error seeding roles: {e}")
 
-        # 2. Seed Admin Users
+    # 2. Seed Admin Users
+    try:
         from sqlalchemy import func
         shahid_user = db.query(User).execution_options(bypass_tenant=True).filter(func.lower(User.username) == "muhammad_shahid").first()
         if not shahid_user:
@@ -78,7 +93,7 @@ def seed_db():
                 username="muhammad_shahid",
                 full_name="Muhammad Shahid",
                 password_hash=get_password_hash("shahid123"),
-                role_id=super_admin_role.id,
+                role_id=super_admin_role_id,
                 tenant_id="friends_network",
                 is_active=True
             )
@@ -86,7 +101,7 @@ def seed_db():
         else:
             shahid_user.password_hash = get_password_hash("shahid123")
             shahid_user.is_active = True
-            shahid_user.role_id = super_admin_role.id
+            shahid_user.role_id = super_admin_role_id
             shahid_user.tenant_id = "friends_network"
             db.add(shahid_user)
             
@@ -97,7 +112,7 @@ def seed_db():
                 username="noor_jamal",
                 full_name="Noor Jamal",
                 password_hash=get_password_hash("noor123"),
-                role_id=sub_admin_role.id,
+                role_id=sub_admin_role_id,
                 tenant_id="friends_network",
                 is_active=True
             )
@@ -105,14 +120,18 @@ def seed_db():
         else:
             noor_user.password_hash = get_password_hash("noor123")
             noor_user.is_active = True
-            noor_user.role_id = sub_admin_role.id
+            noor_user.role_id = sub_admin_role_id
             noor_user.tenant_id = "friends_network"
             db.add(noor_user)
             
         db.commit()
-        print("Admin user accounts ('muhammad_shahid' and 'noor_jamal') seeded and committed successfully!")
+        print("Admin user accounts ('muhammad_shahid' and 'noor_jamal') committed successfully!")
+    except Exception as e:
+        db.rollback()
+        print(f"Error seeding admin users: {e}")
             
-        # 3. Seed Packages
+    # 3. Seed Packages
+    try:
         packages_list = [
             { "id": "pkg-sm-silver", "name": "Silver", "category": "Social Media", "speed": "25 Mbps", "monthly_charges": 1300, "status": "Active", "description": "Social Media plan" },
             { "id": "pkg-sm-gold", "name": "Gold", "category": "Social Media", "speed": "40 Mbps", "monthly_charges": 2000, "status": "Active", "description": "Social Media plan" },
@@ -145,8 +164,13 @@ def seed_db():
                     description=p_data["description"]
                 )
                 db.add(pkg_obj)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Error seeding packages: {e}")
                 
-        # 4. Seed Settings
+    # 4. Seed Settings
+    try:
         settings_exists = db.query(SystemSettings).first()
         if not settings_exists:
             settings_obj = SystemSettings(
@@ -160,10 +184,13 @@ def seed_db():
                 receipt_footer="Thank you for your payment. Keep this receipt for your records."
             )
             db.add(settings_obj)
-            
-        db.commit()
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Error seeding system settings: {e}")
 
-        # 5. Import Customers from Excel
+    # 5. Import Customers from Excel
+    try:
         excel_path = r"E:\Coding\New folder\Downloads\User Data.xlsx"
         if os.path.exists(excel_path):
             cust_count = db.query(Customer).count()

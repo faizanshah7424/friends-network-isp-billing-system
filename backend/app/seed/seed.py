@@ -17,37 +17,64 @@ from backend.app.models.complaint import Complaint
 from backend.app.models.notification import Notification
 from backend.app.models.settings import SystemSettings
 
+from backend.app.models.tenant import Tenant
+
 def seed_db():
     db = SessionLocal()
     try:
         # Ensure database tables exist
         Base.metadata.create_all(bind=engine)
         
+        # 0. Seed Default Tenant
+        tenant_obj = db.query(Tenant).filter(Tenant.id == "friends_network").first()
+        if not tenant_obj:
+            tenant_obj = Tenant(
+                id="friends_network",
+                name="Friends Network",
+                domain="friends.network",
+                subscription_plan="Enterprise",
+                status="Active",
+                brand_name="Friends Network",
+                email="support@friendsnetwork.net",
+                phone="021-111-362-362",
+                address="Karachi, Pakistan",
+                currency="PKR",
+                theme_color="indigo",
+                is_activated=True
+            )
+            db.add(tenant_obj)
+            db.commit()
+            db.refresh(tenant_obj)
+
         # 1. Seed Roles
         super_admin_role = db.query(Role).filter(Role.name == "Super Admin").first()
         if not super_admin_role:
             super_admin_role = Role(
+                id="cae6f7e9-fd17-44d4-b1eb-ac2eea6201ac",
                 name="Super Admin",
                 permissions=["all"]
             )
             db.add(super_admin_role)
+            db.commit()
+            db.refresh(super_admin_role)
             
         sub_admin_role = db.query(Role).filter(Role.name == "Sub Admin").first()
         if not sub_admin_role:
             sub_admin_role = Role(
+                id="927950e6-a55c-4edb-804f-c1ba3888cfd1",
                 name="Sub Admin",
                 permissions=["recovery", "payments", "complaints", "customer_view"]
             )
             db.add(sub_admin_role)
-            
-        db.commit()
-        db.refresh(super_admin_role)
-        db.refresh(sub_admin_role)
+            db.commit()
+            db.refresh(sub_admin_role)
 
         # 2. Seed Admin Users
-        shahid_user = db.query(User).execution_options(bypass_tenant=True).filter(User.username == "muhammad_shahid").first()
+        from sqlalchemy import func
+        shahid_user = db.query(User).execution_options(bypass_tenant=True).filter(func.lower(User.username) == "muhammad_shahid").first()
         if not shahid_user:
             shahid_user = User(
+                id="5f9cd175-c6c2-41a5-b443-2104574f7c68",
                 username="muhammad_shahid",
                 full_name="Muhammad Shahid",
                 password_hash=get_password_hash("shahid123"),
@@ -59,13 +86,14 @@ def seed_db():
         else:
             shahid_user.password_hash = get_password_hash("shahid123")
             shahid_user.is_active = True
-            if not getattr(shahid_user, "tenant_id", None):
-                shahid_user.tenant_id = "friends_network"
+            shahid_user.role_id = super_admin_role.id
+            shahid_user.tenant_id = "friends_network"
             db.add(shahid_user)
             
-        noor_user = db.query(User).execution_options(bypass_tenant=True).filter(User.username == "noor_jamal").first()
+        noor_user = db.query(User).execution_options(bypass_tenant=True).filter(func.lower(User.username) == "noor_jamal").first()
         if not noor_user:
             noor_user = User(
+                id="1acf51a0-afe4-4f01-a452-da57bc120522",
                 username="noor_jamal",
                 full_name="Noor Jamal",
                 password_hash=get_password_hash("noor123"),
@@ -77,8 +105,8 @@ def seed_db():
         else:
             noor_user.password_hash = get_password_hash("noor123")
             noor_user.is_active = True
-            if not getattr(noor_user, "tenant_id", None):
-                noor_user.tenant_id = "friends_network"
+            noor_user.role_id = sub_admin_role.id
+            noor_user.tenant_id = "friends_network"
             db.add(noor_user)
             
         db.commit()

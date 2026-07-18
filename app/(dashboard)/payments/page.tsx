@@ -309,7 +309,7 @@ export default function PaymentsPage() {
                   value={billingMonth}
                   onChange={(e) => setBillingMonth(e.target.value)}
                   required
-                  className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-xs outline-none transition-all focus:border-primary focus:bg-card"
+                  className="h-10 w-full rounded-xl border border-border bg-card px-3.5 text-xs text-foreground outline-none transition-all focus:border-primary"
                 >
                   <option value="July 2026">July 2026</option>
                   <option value="June 2026">June 2026</option>
@@ -437,7 +437,7 @@ export default function PaymentsPage() {
                   required
                   value={paymentDate}
                   onChange={(e) => setPaymentDate(e.target.value)}
-                  className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-xs outline-none transition-all focus:border-primary focus:bg-card"
+                  className="h-10 w-full rounded-xl border border-border bg-card px-3.5 text-xs text-foreground outline-none transition-all focus:border-primary"
                 />
               </div>
             </div>
@@ -449,7 +449,7 @@ export default function PaymentsPage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="e.g. Received by rider Sohail, late fee waive request accepted"
-                className="w-full rounded-xl border border-border p-3 text-xs outline-none bg-secondary/30 transition-all focus:border-primary focus:bg-card"
+                className="w-full rounded-xl border border-border p-3 text-xs outline-none bg-card text-foreground transition-all focus:border-primary"
               />
             </div>
 

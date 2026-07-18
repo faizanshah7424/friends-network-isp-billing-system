@@ -164,11 +164,11 @@ export default function DashboardPage() {
             className="h-16 w-16 object-contain" 
           />
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
               {isSubAdmin ? 'Recovery & Complaint Desk' : 'Dashboard Overview'}
             </h1>
-            <p className="text-slate-500 text-sm mt-1">
-              Welcome back, <span className="font-semibold text-slate-700">{currentUser.name}</span>. 
+            <p className="text-muted-foreground text-sm mt-1 font-medium">
+              Welcome back, <span className="font-semibold text-foreground">{currentUser.name}</span>. 
               {isSubAdmin 
                 ? ' Dedicated recovery collections & active support tickets management terminal.' 
                 : ' Real-time financial & operational status for Friends Network.'}

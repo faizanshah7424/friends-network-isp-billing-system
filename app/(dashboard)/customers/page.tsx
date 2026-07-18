@@ -231,7 +231,7 @@ export default function CustomersPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Search Box */}
           <div className="relative">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search by name, ID, phone..."
@@ -240,7 +240,7 @@ export default function CustomersPage() {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="h-10 w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-10 pr-4 text-xs font-semibold text-slate-900 outline-none transition-all focus:border-primary focus:bg-card dark:border-border dark:bg-secondary/30 dark:text-slate-100"
+              className="h-10 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-xs font-semibold text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
             />
           </div>
 
@@ -252,7 +252,7 @@ export default function CustomersPage() {
                 setAreaFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="h-10 w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3 text-xs font-semibold text-slate-900 outline-none transition-all focus:border-primary focus:bg-card dark:border-border dark:bg-secondary/30 dark:text-slate-100"
+              className="h-10 w-full rounded-xl border border-border bg-card px-3 text-xs font-semibold text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
             >
               <option value="All">All Areas</option>
               {areas.filter((a) => a !== 'All').map((area) => (
@@ -271,7 +271,7 @@ export default function CustomersPage() {
                 setStatusFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="h-10 w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3 text-xs font-semibold text-slate-900 outline-none transition-all focus:border-primary focus:bg-card dark:border-border dark:bg-secondary/30 dark:text-slate-100"
+              className="h-10 w-full rounded-xl border border-border bg-card px-3 text-xs font-semibold text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
             >
               <option value="All">All Connections</option>
               <option value="Active">Active</option>
@@ -288,7 +288,7 @@ export default function CustomersPage() {
                   setPaymentFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="h-10 w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3 text-xs font-semibold text-slate-900 outline-none transition-all focus:border-primary focus:bg-card dark:border-border dark:bg-secondary/30 dark:text-slate-100"
+                className="h-10 w-full rounded-xl border border-border bg-card px-3 text-xs font-semibold text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
               >
                 <option value="All">All Payments</option>
                 <option value="Paid">Paid</option>

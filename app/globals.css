@@ -47,11 +47,11 @@
   --primary: #2563eb; /* Royal Blue */
   --primary-foreground: #ffffff;
   
-  --secondary: #3b82f6; /* Blue */
-  --secondary-foreground: #ffffff;
+  --secondary: #f1f5f9; /* Soft Slate Secondary */
+  --secondary-foreground: #0f172a;
   
   --muted: #f1f5f9;
-  --muted-foreground: #334155; /* Crisp Dark Slate-700 (Elevated from faint #64748b for high contrast) */
+  --muted-foreground: #475569; /* Slate-600 */
   
   --accent: #06b6d4; /* Cyan */
   --accent-foreground: #ffffff;
@@ -59,7 +59,7 @@
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   
-  --border: #cbd5e1; /* Clear Slate-300 Border */
+  --border: #e2e8f0; /* Crisp Slate Border */
   --input: #ffffff;  /* White input bg */
   --ring: #2563eb;
   
@@ -90,21 +90,11 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* Headings High Contrast Global Override */
-h1, h2, h3, h4, h5, h6 {
-  color: #0f172a !important;
-}
-
-/* Descriptions & Subtitles High Contrast */
-.text-muted-foreground {
-  color: #334155 !important;
-}
-
 .glass {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(203, 213, 225, 0.6);
+  border: 1px solid var(--border);
 }
 
 /* Cards styling and lift */

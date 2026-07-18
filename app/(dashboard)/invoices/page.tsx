@@ -112,7 +112,7 @@ export default function InvoicesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-sm">
               <thead>
-                <tr className="border-b border-border bg-secondary/20 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <tr className="border-b border-border bg-muted/60 text-xs font-bold text-slate-700 uppercase tracking-wider">
                   <th className="p-4">Invoice No</th>
                   <th className="p-4">Customer</th>
                   <th className="p-4">Billing Month</th>
@@ -126,7 +126,7 @@ export default function InvoicesPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filteredInvoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-secondary/20 transition-all duration-150">
+                  <tr key={inv.id} className="hover:bg-muted/40 transition-all duration-150">
                     <td className="p-4 font-semibold text-indigo-500">{inv.id}</td>
                     <td className="p-4">
                       <span className="font-semibold text-foreground block">

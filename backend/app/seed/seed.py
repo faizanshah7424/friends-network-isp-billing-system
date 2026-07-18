@@ -53,79 +53,81 @@ def seed_db():
         print(f"Error seeding tenant: {e}")
 
     # 1. Seed Roles
-    super_admin_role_id = "cae6f7e9-fd17-44d4-b1eb-ac2eea6201ac"
-    sub_admin_role_id = "927950e6-a55c-4edb-804f-c1ba3888cfd1"
+    super_admin_role = None
+    sub_admin_role = None
     try:
         super_admin_role = db.query(Role).filter(Role.name == "Super Admin").first()
         if not super_admin_role:
             super_admin_role = Role(
-                id=super_admin_role_id,
+                id="cae6f7e9-fd17-44d4-b1eb-ac2eea6201ac",
                 name="Super Admin",
                 permissions=["all"]
             )
             db.add(super_admin_role)
             db.commit()
-        else:
-            super_admin_role_id = super_admin_role.id
+            db.refresh(super_admin_role)
             
         sub_admin_role = db.query(Role).filter(Role.name == "Sub Admin").first()
         if not sub_admin_role:
             sub_admin_role = Role(
-                id=sub_admin_role_id,
+                id="927950e6-a55c-4edb-804f-c1ba3888cfd1",
                 name="Sub Admin",
                 permissions=["recovery", "payments", "complaints", "customer_view"]
             )
             db.add(sub_admin_role)
             db.commit()
-        else:
-            sub_admin_role_id = sub_admin_role.id
+            db.refresh(sub_admin_role)
     except Exception as e:
         db.rollback()
         print(f"Error seeding roles: {e}")
+        # Fetch existing roles as fallback
+        super_admin_role = db.query(Role).filter(Role.name == "Super Admin").first()
+        sub_admin_role = db.query(Role).filter(Role.name == "Sub Admin").first()
 
     # 2. Seed Admin Users
     try:
-        from sqlalchemy import func
-        shahid_user = db.query(User).execution_options(bypass_tenant=True).filter(func.lower(User.username) == "muhammad_shahid").first()
-        if not shahid_user:
-            shahid_user = User(
-                id="5f9cd175-c6c2-41a5-b443-2104574f7c68",
-                username="muhammad_shahid",
-                full_name="Muhammad Shahid",
-                password_hash=get_password_hash("shahid123"),
-                role_id=super_admin_role_id,
-                tenant_id="friends_network",
-                is_active=True
-            )
-            db.add(shahid_user)
-        else:
-            shahid_user.password_hash = get_password_hash("shahid123")
-            shahid_user.is_active = True
-            shahid_user.role_id = super_admin_role_id
-            shahid_user.tenant_id = "friends_network"
-            db.add(shahid_user)
-            
-        noor_user = db.query(User).execution_options(bypass_tenant=True).filter(func.lower(User.username) == "noor_jamal").first()
-        if not noor_user:
-            noor_user = User(
-                id="1acf51a0-afe4-4f01-a452-da57bc120522",
-                username="noor_jamal",
-                full_name="Noor Jamal",
-                password_hash=get_password_hash("noor123"),
-                role_id=sub_admin_role_id,
-                tenant_id="friends_network",
-                is_active=True
-            )
-            db.add(noor_user)
-        else:
-            noor_user.password_hash = get_password_hash("noor123")
-            noor_user.is_active = True
-            noor_user.role_id = sub_admin_role_id
-            noor_user.tenant_id = "friends_network"
-            db.add(noor_user)
-            
-        db.commit()
-        print("Admin user accounts ('muhammad_shahid' and 'noor_jamal') committed successfully!")
+        if super_admin_role and sub_admin_role:
+            from sqlalchemy import func
+            shahid_user = db.query(User).execution_options(bypass_tenant=True).filter(func.lower(User.username) == "muhammad_shahid").first()
+            if not shahid_user:
+                shahid_user = User(
+                    id="5f9cd175-c6c2-41a5-b443-2104574f7c68",
+                    username="muhammad_shahid",
+                    full_name="Muhammad Shahid",
+                    password_hash=get_password_hash("shahid123"),
+                    role_id=super_admin_role.id,
+                    tenant_id="friends_network",
+                    is_active=True
+                )
+                db.add(shahid_user)
+            else:
+                shahid_user.password_hash = get_password_hash("shahid123")
+                shahid_user.is_active = True
+                shahid_user.role_id = super_admin_role.id
+                shahid_user.tenant_id = "friends_network"
+                db.add(shahid_user)
+                
+            noor_user = db.query(User).execution_options(bypass_tenant=True).filter(func.lower(User.username) == "noor_jamal").first()
+            if not noor_user:
+                noor_user = User(
+                    id="1acf51a0-afe4-4f01-a452-da57bc120522",
+                    username="noor_jamal",
+                    full_name="Noor Jamal",
+                    password_hash=get_password_hash("noor123"),
+                    role_id=sub_admin_role.id,
+                    tenant_id="friends_network",
+                    is_active=True
+                )
+                db.add(noor_user)
+            else:
+                noor_user.password_hash = get_password_hash("noor123")
+                noor_user.is_active = True
+                noor_user.role_id = sub_admin_role.id
+                noor_user.tenant_id = "friends_network"
+                db.add(noor_user)
+                
+            db.commit()
+            print("Admin user accounts ('muhammad_shahid' and 'noor_jamal') committed successfully!")
     except Exception as e:
         db.rollback()
         print(f"Error seeding admin users: {e}")

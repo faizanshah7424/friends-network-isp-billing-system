@@ -199,104 +199,100 @@ export default function InvoicesPage() {
               </button>
 
               {/* Printable Invoice Page Layout */}
-              <div className="space-y-6 text-xs text-foreground bg-card p-6 rounded-xl border border-border print:border-none print:bg-white print:p-0">
-                {/* Company Header */}
-                <div className="flex justify-between items-start border-b border-border pb-5">
-                  <div className="flex items-center gap-3">
-                    <img src="/friends-logo.png" alt="Friends Network Logo" className="h-10 w-10 object-contain" />
-                    <div className="text-left">
-                      <h2 className="font-bold text-base leading-none text-slate-800">{settings.companyName}</h2>
-                      <p className="text-[10px] text-slate-400 font-semibold mt-1.5">{settings.phone} • {settings.email}</p>
-                      <p className="text-[9px] text-slate-400 font-semibold mt-0.5 max-w-[280px] leading-relaxed">{settings.address}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <h3 className="font-black text-xl tracking-tight text-primary">INVOICE</h3>
-                    <p className="font-semibold text-muted-foreground mt-1.5">No: <span className="font-bold font-mono">{selectedInvoice.id}</span></p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Date: {selectedInvoice.billingDate}</p>
-                  </div>
-                </div>
-
-                {/* Customer Details */}
-                <div className="grid grid-cols-2 gap-6 border-b border-border pb-5 text-[10px]">
+              <div className="space-y-6 text-xs text-slate-800 bg-white p-8 rounded-xl border border-slate-200 print:border-none print:p-0">
+                {/* Header */}
+                <div className="flex justify-between items-start border-b border-slate-200 pb-4">
                   <div>
-                    <span className="text-muted-foreground font-semibold uppercase text-[8px] block">Invoiced To</span>
-                    <p className="font-bold text-sm mt-1">{selectedInvoice.customerName}</p>
-                    <p className="text-muted-foreground mt-1 font-semibold">Customer ID: {selectedInvoice.customerId}</p>
-                    <p className="text-muted-foreground mt-0.5 max-w-[220px] leading-normal">{getCustomerAddress(selectedInvoice.customerId)}</p>
+                    <h2 className="text-2xl font-black tracking-tight text-slate-900">Friends Network</h2>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-0.5">INTERNET SERVICE PROVIDER</p>
                   </div>
-                  <div className="text-right">
-                    <span className="text-muted-foreground font-semibold uppercase text-[8px] block">Billing Month</span>
-                    <p className="font-bold text-sm mt-1">{selectedInvoice.billingMonth}</p>
-                    <p className="text-muted-foreground mt-1">Due Date: <span className="font-semibold">{selectedInvoice.dueDate}</span></p>
-                    <p className="text-muted-foreground mt-0.5">Payment Status: <span className="font-bold">{selectedInvoice.paymentStatus}</span></p>
+                  <div className="text-right text-xs">
+                    <p className="font-bold text-slate-800"><span className="text-slate-500">Bill No#</span> {selectedInvoice.id}</p>
+                    <p className="text-slate-600 mt-1"><span className="font-semibold text-slate-700">Invoice Date:</span> {selectedInvoice.billingDate}</p>
+                    <p className="text-slate-600 mt-0.5"><span className="font-semibold text-slate-700">Due Date:</span> {selectedInvoice.dueDate}</p>
                   </div>
                 </div>
 
-                {/* Invoice Charges List */}
-                <div className="space-y-3.5 border-b border-border pb-5">
-                  <div className="flex justify-between font-bold text-muted-foreground uppercase text-[8px]">
-                    <span>Billing Breakdown Item</span>
-                    <span className="text-right">Charge Amount</span>
+                {/* Billed By / Billed To */}
+                <div className="grid grid-cols-2 gap-8 text-xs border-b border-slate-200 pb-5">
+                  <div>
+                    <h4 className="font-bold text-slate-900 mb-1">Billed By</h4>
+                    <p className="font-semibold text-slate-800">Friends Network</p>
+                    <p className="text-slate-600">Pakistan</p>
+                    <p className="text-slate-600 font-mono text-[11px] mt-1">Phone: +92 346 2523505</p>
                   </div>
-
-                  {/* Charges */}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Monthly Bandwidth Plan Subscription Charges</span>
-                    <span className="font-semibold text-foreground">PKR {selectedInvoice.monthlyCharges}</span>
-                  </div>
-
-                  {/* Previous Due */}
-                  {selectedInvoice.previousDue > 0 && (
-                    <div className="flex justify-between text-rose-500/80">
-                      <span>Previous Arrears / Outstanding Ledger Balance</span>
-                      <span className="font-semibold">PKR {selectedInvoice.previousDue}</span>
-                    </div>
-                  )}
-
-                  {/* Additional Charges */}
-                  {selectedInvoice.additionalCharges > 0 && (
-                    <div className="flex justify-between">
-                      <span>Installation, Fiber splicing, or ONT Hardware Fee</span>
-                      <span className="font-semibold text-foreground">PKR {selectedInvoice.additionalCharges}</span>
-                    </div>
-                  )}
-
-                  {/* Discount */}
-                  {selectedInvoice.discount > 0 && (
-                    <div className="flex justify-between text-emerald-500">
-                      <span>Ledger Credit Adjustment / Discount Voucher Applied</span>
-                      <span className="font-semibold">-PKR {selectedInvoice.discount}</span>
-                    </div>
-                  )}
-
-                  {/* Tax removed */}
-                </div>
-
-                {/* Invoice Reconciliation Ledger */}
-                <div className="flex justify-end pt-2">
-                  <div className="w-full max-w-[280px] space-y-2 text-[10px] text-right font-medium">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Total Invoiced Amount:</span>
-                      <span className="font-semibold">PKR {selectedInvoice.grandTotal}</span>
-                    </div>
-                    <div className="flex justify-between text-emerald-600">
-                      <span className="font-semibold">Cleared Payments:</span>
-                      <span className="font-semibold">-PKR {selectedInvoice.amountPaid}</span>
-                    </div>
-                    <div className="flex justify-between border-t border-border pt-2 text-sm font-black text-foreground">
-                      <span>Remaining Balance:</span>
-                      <span className={selectedInvoice.outstandingBalance > 0 ? 'text-rose-500' : 'text-emerald-500'}>
-                        PKR {selectedInvoice.outstandingBalance}
-                      </span>
-                    </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 mb-1">Billed To</h4>
+                    <p className="font-bold text-slate-900">{selectedInvoice.customerName}</p>
+                    <p className="text-slate-600 leading-relaxed max-w-[240px]">{getCustomerAddress(selectedInvoice.customerId) || 'Karachi, Pakistan'}</p>
                   </div>
                 </div>
 
-                {/* Footer notes */}
-                <p className="text-[10px] text-muted-foreground text-center border-t border-border pt-4 leading-normal bg-secondary/30 p-2.5 rounded-xl border border-border">
-                  {settings.invoiceFooter}
-                </p>
+                {/* Line Items Table */}
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-100 border-b border-slate-200 text-slate-800 font-bold">
+                      <tr>
+                        <th className="p-3">Service's</th>
+                        <th className="p-3 text-center">Quantity</th>
+                        <th className="p-3 text-right">Rate</th>
+                        <th className="p-3 text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200 text-slate-700">
+                      <tr>
+                        <td className="p-3">
+                          <span className="font-medium text-slate-900 block">Monthly Subscription of Internet</span>
+                          <span className="text-[11px] text-slate-500">Standard High-Speed Line</span>
+                        </td>
+                        <td className="p-3 text-center font-medium">1</td>
+                        <td className="p-3 text-right font-medium">PKR {selectedInvoice.monthlyCharges.toLocaleString()}</td>
+                        <td className="p-3 text-right font-bold text-slate-900">PKR {selectedInvoice.monthlyCharges.toLocaleString()}.00</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Totals & Bank Details */}
+                <div className="grid grid-cols-2 gap-6 text-xs border-b border-slate-200 pb-5 pt-2">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="font-bold text-slate-900">Total (in words) :</p>
+                      <p className="font-bold text-indigo-700 uppercase tracking-wide mt-0.5">
+                        PKR {selectedInvoice.grandTotal.toLocaleString()} RUPEES ONLY
+                      </p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100">
+                      <p className="font-bold text-slate-900">Bank Details</p>
+                      <p className="text-slate-600 mt-1"><span className="font-medium text-slate-700">Account Name:</span> Muhammad Shahid</p>
+                      <p className="text-slate-600 font-mono text-[11px]"><span className="font-medium text-slate-700 font-sans">Account Number:</span> PK45BAHL5011008100779001</p>
+                      <p className="text-slate-600"><span className="font-medium text-slate-700">Bank:</span> Bank Al Habib</p>
+                    </div>
+                  </div>
+
+                  <div className="text-right space-y-2 self-start bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div className="flex justify-between text-slate-600">
+                      <span>Discount:</span>
+                      <span>PKR {selectedInvoice.discount.toLocaleString()}.00</span>
+                    </div>
+                    <div className="flex justify-between font-extrabold text-sm text-slate-900 border-t border-slate-200 pt-2">
+                      <span>Total (PKR):</span>
+                      <span className="text-indigo-600">PKR {selectedInvoice.grandTotal.toLocaleString()}.00</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Terms and Conditions */}
+                <div className="space-y-1.5 text-[11px] text-slate-600">
+                  <p className="font-bold text-slate-900 text-xs">Terms and Conditions</p>
+                  <ol className="list-decimal list-inside space-y-1 leading-relaxed">
+                    <li>Internet subscription period is from the 10th of each month to the 10th of the following month.</li>
+                    <li>Billing cycle is from the 1st to the 10th of every month.</li>
+                    <li>Subscription charges must be paid in advance to avoid service interruption.</li>
+                    <li>If a new client joins mid-month, subscription charges will still be payable in advance for the full cycle (10th to 10th).</li>
+                    <li>One-time charges (OTC) apply at the time of installation and are non-refundable.</li>
+                  </ol>
+                </div>
               </div>
 
               {/* Action Drawer */}
@@ -307,6 +303,15 @@ export default function InvoicesPage() {
                 >
                   Close Bill
                 </button>
+                <a
+                  href={`https://friends-network-isp-billing-system-production.up.railway.app/api/v1/billing/invoices/${selectedInvoice.id}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-border bg-secondary/80 px-4 text-xs font-semibold text-foreground hover:bg-secondary transition-all"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Download PDF</span>
+                </a>
                 <button
                   onClick={handlePrint}
                   className="flex h-9 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/95 transition-all"

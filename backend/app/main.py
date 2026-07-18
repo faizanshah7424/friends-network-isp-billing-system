@@ -216,8 +216,8 @@ def read_root():
     return {
         "status": "online",
         "project": settings.PROJECT_NAME,
-        "version": "4.0.2",
-        "build_id": "v4.0.2-bcrypt-direct",
+        "version": "4.1.0",
+        "build_id": "v4.1.0-isp-data-migrated",
         "documentation": "/docs"
     }
 

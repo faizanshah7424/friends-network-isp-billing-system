@@ -34,6 +34,53 @@ def get_invoice(
         raise HTTPException(status_code=404, detail="Invoice not found")
     return invoice
 
+@router.get("/{id}/pdf")
+def get_invoice_pdf(
+    id: str,
+    db: Session = Depends(get_db)
+):
+    from fastapi.responses import Response
+    from backend.app.services.pdf_generator import generate_invoice_pdf
+    from backend.app.models.package import Package
+
+    invoice = db.query(Invoice).filter((Invoice.id == id) | (Invoice.invoice_number == id)).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+        
+    customer = db.query(Customer).filter(Customer.customer_id == invoice.customer_id).first()
+    
+    invoice_dict = {
+        "id": invoice.id,
+        "invoice_number": invoice.invoice_number,
+        "billing_date": invoice.billing_date,
+        "due_date": invoice.due_date,
+        "customer_name": invoice.customer_name,
+        "monthly_charges": invoice.monthly_charges,
+        "previous_due": invoice.previous_due,
+        "additional_charges": invoice.additional_charges,
+        "discount": invoice.discount,
+        "grand_total": invoice.grand_total,
+        "outstanding_balance": invoice.outstanding_balance
+    }
+    
+    customer_dict = {}
+    if customer:
+        pkg = db.query(Package).filter(Package.id == customer.package_id).first()
+        customer_dict = {
+            "name": customer.name,
+            "address": customer.address,
+            "package_name": customer.package_name,
+            "speed": pkg.speed if pkg else "High Speed"
+        }
+        
+    pdf_bytes = generate_invoice_pdf(invoice_dict, customer_dict)
+    filename = f"Invoice_{invoice.invoice_number}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"inline; filename={filename}"}
+    )
+
 @router.post("/", response_model=InvoiceSchema)
 def create_invoice(
     invoice_in: InvoiceCreate,

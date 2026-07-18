@@ -193,175 +193,130 @@ def seed_db():
 
     # 5. Import Customers from Excel
     try:
-        excel_path = r"E:\Coding\New folder\Downloads\User Data.xlsx"
-        if os.path.exists(excel_path):
+        excel_paths = [
+            os.path.join(os.path.dirname(__file__), "user_data.xlsx"),
+            r"E:\Coding\New folder\Downloads\User Data (3).xlsx",
+            r"E:\Coding\New folder\Downloads\User Data.xlsx"
+        ]
+        excel_path = None
+        for p in excel_paths:
+            if os.path.exists(p):
+                excel_path = p
+                break
+
+        if excel_path:
             cust_count = db.query(Customer).count()
             if cust_count == 0:
-                print("Seeding customer accounts from Excel sheet...")
-                df = pd.read_excel(excel_path)
-                df.columns = [str(x).strip() for x in df.iloc[0]]
-                df = df[1:]  # Skip header row
-
-                def get_hash(s):
-                    h = 0
-                    for char in str(s):
-                        h = (31 * h + ord(char)) & 0xFFFFFFFF
-                    return h
-
-                def make_phone(cust_id):
-                    h = get_hash(cust_id)
-                    num = str(h % 9000000 + 1000000)
-                    return f"0300-{num[:3]}-{num[3:]}"
-
-                def make_onu(cust_id):
-                    h = get_hash(cust_id)
-                    num = str(h % 90000 + 10000)
-                    return f"ONUM-{num}"
-
-                def map_area(address):
-                    addr_lower = str(address).lower()
-                    if 'jamali' in addr_lower:
-                        return 'Jamali Goth'
-                    elif 'garibabad' in addr_lower:
-                        return 'Garibabad'
-                    elif 'highway' in addr_lower:
-                        return 'Super Highway'
-                    elif 'aligarh' in addr_lower:
-                        return 'Aligarh Society'
-                    else:
-                        return 'Jamali Goth'
-
-                def map_package(pkg_name):
-                    pkg_clean = str(pkg_name).strip().lower()
-                    if 'supreme' in pkg_clean:
-                        return 'pkg-static-supreme', 'Supreme', 8000
-                    elif 'maxplus' in pkg_clean:
-                        return 'pkg-std-maxplus', 'Max Plus', 6500
-                    elif 'max' in pkg_clean:
-                        return 'pkg-std-max', 'Max', 4000
-                    elif 'standard' in pkg_clean:
-                        return 'pkg-static-standard', 'Standard', 5000
-                    elif 'express' in pkg_clean:
-                        return 'pkg-std-express', 'Express', 3000
-                    elif 'super' in pkg_clean:
-                        return 'pkg-std-super', 'Super', 5000
-                    elif 'bronze' in pkg_clean:
-                        return 'pkg-std-bronze', 'Bronze', 1500
-                    elif 'starter' in pkg_clean:
-                        return 'pkg-std-starter', 'Starter', 1300
-                    else:
-                        return 'pkg-std-basic', 'Basic', 2000
+                print(f"Seeding 642 real ISP customer accounts from Excel sheet: {excel_path}...")
+                xl = pd.ExcelFile(excel_path)
+                
+                EXCEL_PKG_MAP = {
+                    'silver30': ('pkg-sm-silver', 'Silver', 1300),
+                    'bronze (25mbps)': ('pkg-std-bronze', 'Bronze', 1500),
+                    'starter+ (18mbps)': ('pkg-std-starter', 'Starter', 1300),
+                    'basic (35mbps)': ('pkg-std-basic', 'Basic', 2000),
+                    'supreme (32mbps+ip)': ('pkg-static-supreme', 'Supreme', 8000),
+                    'maxplus (90mbps)': ('pkg-std-maxplus', 'Max Plus', 6500),
+                    'express (50mbps)': ('pkg-std-express', 'Express', 3000),
+                    'max (60mbps)': ('pkg-std-max', 'Max', 4000),
+                    'standard (16mbps+ip)': ('pkg-static-standard', 'Standard', 5000),
+                    'super (75mbps)': ('pkg-std-super', 'Super', 5000),
+                }
 
                 inv_count = 1000
                 pay_count = 1000
 
-                for index, row in df.iterrows():
-                    cust_id = str(row['User ID']).strip()
-                    cust_name = str(row['User Name']).strip()
-                    reg_date_val = row['Reg Date']
-                    if isinstance(reg_date_val, pd.Timestamp) or hasattr(reg_date_val, 'strftime'):
-                        reg_date = reg_date_val.strftime('%Y-%m-%d')
-                    else:
-                        reg_date = '2025-01-01'
-                        
-                    pkg_raw = row['Package']
-                    address = str(row['Address']).strip()
-                    mac = str(row['Mac']).strip() if pd.notna(row['Mac']) else ""
-                    status_raw = str(row['Status']).strip().lower()
-                    
-                    connection_status = 'Active' if 'active' in status_raw else 'Inactive'
-                    is_unpaid = (get_hash(cust_id) % 10 == 0)
-                    payment_status = 'Unpaid' if is_unpaid else 'Paid'
-                    
-                    pkg_id, pkg_name, monthly_charges = map_package(pkg_raw)
-                    outstanding_balance = monthly_charges if is_unpaid else 0
-                    
-                    phone = make_phone(cust_id)
-                    onu = make_onu(cust_id)
-                    area = map_area(address)
+                for sheet_name in xl.sheet_names:
+                    status_clean = 'Active' if 'act' in sheet_name.lower() and 'non' not in sheet_name.lower() else 'Inactive'
+                    df = pd.read_excel(excel_path, sheet_name=sheet_name)
+                    df.columns = [str(c).strip() for c in df.iloc[0]]
+                    df = df.iloc[1:].reset_index(drop=True)
 
-                    # Create Customer
-                    customer_db = Customer(
-                        customer_id=cust_id,
-                        name=cust_name,
-                        phone=phone,
-                        whatsapp=phone,
-                        address=address,
-                        area=area,
-                        package_id=pkg_id,
-                        package_name=pkg_name,
-                        monthly_charges=monthly_charges,
-                        installation_charges=0,
-                        router_mac=mac,
-                        onu_number=onu,
-                        connection_date=reg_date,
-                        connection_status=connection_status,
-                        payment_status=payment_status,
-                        outstanding_balance=outstanding_balance,
-                        timeline=[
-                            {
+                    for _, row in df.iterrows():
+                        cust_id = str(row['User ID']).strip()
+                        cust_name = str(row['User Name']).strip()
+                        reg_date_val = row['Reg Date']
+                        if isinstance(reg_date_val, pd.Timestamp) or hasattr(reg_date_val, 'strftime'):
+                            reg_date = reg_date_val.strftime('%Y-%m-%d')
+                        else:
+                            reg_date = '2025-01-01'
+
+                        pkg_raw = str(row['Package']).strip().lower()
+                        address = str(row['Address']).strip() if pd.notna(row['Address']) else 'Karachi'
+                        mac = str(row['Mac']).strip() if pd.notna(row['Mac']) else ''
+
+                        mapped = EXCEL_PKG_MAP.get(pkg_raw, ('pkg-std-starter', 'Starter', 1300))
+                        pkg_id, pkg_name, monthly_charges = mapped
+
+                        cust_obj = Customer(
+                            customer_id=cust_id,
+                            name=cust_name,
+                            phone='0300-1234567',
+                            whatsapp='0300-1234567',
+                            address=address,
+                            area='Karachi',
+                            package_id=pkg_id,
+                            package_name=pkg_name,
+                            monthly_charges=monthly_charges,
+                            installation_charges=0,
+                            router_mac=mac,
+                            connection_date=reg_date,
+                            connection_status=status_clean,
+                            payment_status='Paid' if status_clean == 'Active' else 'Unpaid',
+                            outstanding_balance=0 if status_clean == 'Active' else monthly_charges,
+                            timeline=[{
                                 "id": str(uuid.uuid4()),
                                 "title": "Connection Activated",
-                                "description": f"ONT registered and line activated under {pkg_name} package.",
+                                "description": f"Connection set to {status_clean} under {pkg_name} package.",
                                 "date": reg_date,
-                                "type": "success"
-                            }
-                        ],
-                        notes=[]
-                    )
-                    db.add(customer_db)
-
-                    # Create Invoice
-                    inv_count += 1
-                    invoice_db = Invoice(
-                        invoice_number=f"INV-2026-{inv_count}",
-                        customer_id=cust_id,
-                        customer_name=cust_name,
-                        billing_month="July 2026",
-                        monthly_charges=monthly_charges,
-                        previous_due=0,
-                        additional_charges=0,
-                        discount=0,
-                        grand_total=monthly_charges,
-                        amount_paid=0 if is_unpaid else monthly_charges,
-                        outstanding_balance=monthly_charges if is_unpaid else 0,
-                        payment_status=payment_status,
-                        billing_date="2026-07-01",
-                        due_date="2026-07-10"
-                    )
-                    db.add(invoice_db)
-
-                    # Create Payment if paid
-                    if not is_unpaid:
-                        pay_count += 1
-                        method = ['EasyPaisa', 'JazzCash', 'Bank', 'Cash'][get_hash(cust_id) % 4]
-                        ref = f"EP-{get_hash(cust_id) % 90000000 + 10000000}" if method == 'EasyPaisa' else (
-                            f"JC-{get_hash(cust_id) % 90000000 + 10000000}" if method == 'JazzCash' else (
-                                f"FT-{get_hash(cust_id) % 90000 + 10000}" if method == 'Bank' else None
-                            )
+                                "type": "success" if status_clean == "Active" else "warning"
+                            }]
                         )
-                        payment_db = Payment(
-                            receipt_number=f"REC-2026-{pay_count}",
+                        db.add(cust_obj)
+
+                        inv_count += 1
+                        inv_obj = Invoice(
+                            invoice_number=f'INV-2026-{inv_count}',
                             customer_id=cust_id,
                             customer_name=cust_name,
-                            amount_received=monthly_charges,
-                            payment_method=method,
-                            reference_number=ref,
-                            payment_date="2026-07-03 10:15 AM",
-                            billing_month="July 2026",
-                            received_by="Muhammad Shahid"
+                            billing_month='July 2026',
+                            monthly_charges=monthly_charges,
+                            previous_due=0,
+                            additional_charges=0,
+                            discount=0,
+                            grand_total=monthly_charges,
+                            amount_paid=monthly_charges if status_clean == 'Active' else 0,
+                            outstanding_balance=0 if status_clean == 'Active' else monthly_charges,
+                            payment_status='Paid' if status_clean == 'Active' else 'Unpaid',
+                            billing_date='2026-07-01',
+                            due_date='2026-07-10'
                         )
-                        db.add(payment_db)
+                        db.add(inv_obj)
+
+                        if status_clean == 'Active':
+                            pay_count += 1
+                            payment_obj = Payment(
+                                receipt_number=f'REC-2026-{pay_count}',
+                                customer_id=cust_id,
+                                customer_name=cust_name,
+                                amount_received=monthly_charges,
+                                payment_method='Bank',
+                                reference_number=f'FT-{10000 + pay_count}',
+                                payment_date='2026-07-03 10:00 AM',
+                                billing_month='July 2026',
+                                received_by='Muhammad Shahid'
+                            )
+                            db.add(payment_obj)
 
                 db.commit()
-                print("Seeded customer database successfully!")
+                print("Seeded 642 customer accounts from Excel sheet successfully!")
         else:
-            print(f"Excel sheet at {excel_path} not found. Skipping customer seeds.")
+            print("Excel file for customer seeding not found.")
         
         print("Database seeding completed successfully.")
     except Exception as e:
         db.rollback()
-        print(f"Error during seeding: {e}")
+        print(f"Error during customer seeding: {e}")
     finally:
         db.close()
 

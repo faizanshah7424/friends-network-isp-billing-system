@@ -119,7 +119,7 @@ export default function DashboardPage() {
 
   const latestActivities = useMemo(() => {
     return customers
-      .flatMap((c) => c.timeline.map((t) => ({ ...t, customerName: c.name, customerId: c.id })))
+      .flatMap((c) => c.timeline.map((t) => ({ ...t, customerName: c.name, customerId: c.customerId || c.id, customerDbId: c.id })))
       .sort((a, b) => b.id.localeCompare(a.id))
       .slice(0, 5);
   }, [customers]);
@@ -598,8 +598,8 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between items-center">
-                    <p className="text-xs font-bold text-foreground">
-                      {act.title} — {act.customerName} (<Link href={`/customers/${act.customerId}`} className="text-indigo-500 hover:underline font-semibold font-mono">{act.customerId}</Link>)
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">
+                      {act.title} — {act.customerName} (<Link href={`/customers/${act.customerDbId || act.customerId}`} className="text-indigo-600 dark:text-indigo-400 hover:underline font-bold font-mono">{act.customerId}</Link>)
                     </p>
                     <span className="text-[10px] text-muted-foreground">{act.date}</span>
                   </div>

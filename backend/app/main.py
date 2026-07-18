@@ -216,8 +216,8 @@ def read_root():
     return {
         "status": "online",
         "project": settings.PROJECT_NAME,
-        "version": "4.1.1",
-        "build_id": "v4.1.1-reportlab-pdf",
+        "version": "4.2.0",
+        "build_id": "v4.2.0-real-customer-ids-contrast",
         "documentation": "/docs"
     }
 

@@ -17,7 +17,8 @@ export interface CustomerNote {
 }
 
 export interface Customer {
-  id: string; // FNB-XXXX
+  id: string; // FNB-XXXX or UUID
+  customerId?: string; // Real production ID (e.g. j-b132)
   name: string;
   phone: string;
   whatsapp?: string;

@@ -128,9 +128,9 @@ export default function CustomerDetailsPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">{customer.name}</h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Customer Account: <span className="font-semibold text-indigo-500">{customer.id}</span>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">{customer.name}</h1>
+            <p className="text-slate-600 dark:text-slate-300 font-medium text-sm mt-1">
+              Customer Account: <span className="font-bold font-mono text-indigo-600 dark:text-indigo-400">{customer.customerId || customer.id}</span>
             </p>
           </div>
         </div>
@@ -140,7 +140,7 @@ export default function CustomerDetailsPage() {
           {customer.connectionStatus === 'Active' ? (
             <button
               onClick={() => suspendCustomer(customer.id)}
-              className="flex items-center justify-center gap-1.5 h-9 rounded-xl border border-rose-500/30 bg-rose-500/5 px-4 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-all"
+              className="flex items-center justify-center gap-1.5 h-9 rounded-xl border border-rose-500/30 bg-rose-500/5 px-4 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-all"
             >
               <UserX className="h-4 w-4" />
               <span>Suspend</span>
@@ -148,7 +148,7 @@ export default function CustomerDetailsPage() {
           ) : (
             <button
               onClick={() => activateCustomer(customer.id)}
-              className="flex items-center justify-center gap-1.5 h-9 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-all"
+              className="flex items-center justify-center gap-1.5 h-9 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-all"
             >
               <UserCheck className="h-4 w-4" />
               <span>Activate</span>
@@ -157,7 +157,7 @@ export default function CustomerDetailsPage() {
 
           <button
             onClick={() => openRecharge(customer.id)}
-            className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/95 transition-all"
+            className="flex items-center justify-center gap-1.5 h-9 rounded-xl bg-primary px-4 text-xs font-bold text-primary-foreground shadow-sm hover:bg-primary/95 transition-all"
           >
             <PlusCircle className="h-4 w-4" />
             <span>Recharge &amp; Update Bill</span>
@@ -176,8 +176,8 @@ export default function CustomerDetailsPage() {
                 <User className="h-10 w-10" />
               </div>
               <div>
-                <h3 className="font-extrabold text-lg text-slate-800">{customer.name}</h3>
-                <span className="text-xs text-indigo-600 font-bold font-mono">ID: {customer.id}</span>
+                <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">{customer.name}</h3>
+                <span className="text-xs text-indigo-600 dark:text-indigo-400 font-bold font-mono">ID: {customer.customerId || customer.id}</span>
               </div>
               <div className="flex gap-2">
                 <StatusBadge status={customer.connectionStatus} />

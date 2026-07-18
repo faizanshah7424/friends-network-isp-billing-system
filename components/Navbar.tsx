@@ -133,11 +133,11 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
                   <button
                     key={c.id}
                     onClick={() => handleSearchResultClick(c.id)}
-                    className="flex w-full items-center justify-between rounded-lg p-2 text-left hover:bg-secondary transition-colors"
+                    className="flex w-full items-center justify-between rounded-lg p-2 text-left hover:bg-slate-100 dark:hover:bg-secondary transition-colors"
                   >
                     <div>
-                      <p className="text-sm font-medium">{c.name}</p>
-                      <p className="text-xs text-muted-foreground">{c.id} • {c.area}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{c.name}</p>
+                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 font-mono">{c.customerId || c.id} • {c.area}</p>
                     </div>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                       c.connectionStatus === 'Active'

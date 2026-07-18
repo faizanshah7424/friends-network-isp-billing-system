@@ -98,8 +98,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
       <div className="flex h-16 items-center px-6 gap-3 border-b border-border">
         <img src="/friends-logo.png" alt="Friends Network Logo" className="h-9 w-9 object-contain rounded-xl" />
         <div className="flex flex-col text-left">
-          <span className="font-bold text-base tracking-tight leading-none text-slate-800">Friends Network</span>
-          <span className="text-[9px] text-slate-400 font-semibold mt-0.5 tracking-wide uppercase">Internet Service Provider</span>
+          <span className="font-bold text-base tracking-tight leading-none text-slate-900 dark:text-white">Friends Network</span>
+          <span className="text-[9px] text-slate-600 font-bold mt-0.5 tracking-wide uppercase dark:text-slate-400">Internet Service Provider</span>
         </div>
       </div>
 
@@ -114,10 +114,10 @@ export default function Sidebar({ onClose }: SidebarProps) {
               key={item.href}
               href={item.href}
               onClick={onClose}
-              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 group ${
                 active
-                  ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20'
-                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20 font-bold'
+                  : 'text-slate-700 hover:bg-secondary hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -154,8 +154,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
               <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-card" />
             </div>
             <div className="flex flex-col text-left">
-              <span className="text-xs font-semibold leading-none">{currentUser.name}</span>
-              <span className="text-[10px] text-muted-foreground mt-1">
+              <span className="text-xs font-bold leading-none text-slate-900 dark:text-white">{currentUser.name}</span>
+              <span className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold mt-1">
                 {currentUser.role === 'Sub Admin' ? 'Sub Administrator' : 'Super Administrator'}
               </span>
             </div>

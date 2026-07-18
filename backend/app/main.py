@@ -41,11 +41,17 @@ def run_migrations():
         try:
             logger.info(f"Running database migrations using {ini_path}...")
             alembic_cfg = Config(ini_path)
+            
+            # Dynamically resolve script_location relative to alembic.ini directory
+            ini_dir = os.path.dirname(os.path.abspath(ini_path))
+            script_location = os.path.join(ini_dir, "alembic")
+            alembic_cfg.set_main_option("script_location", script_location)
             alembic_cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+            
             command.upgrade(alembic_cfg, "head")
             logger.info("Database migrations completed successfully.")
         except Exception as e:
-            logger.error(f"Error running database migrations: {e}")
+            logger.error(f"Error running database migrations: {e}", exc_info=True)
     else:
         logger.warning("alembic.ini not found. Skipping auto-migrations.")
 

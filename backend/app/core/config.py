@@ -56,8 +56,23 @@ class Settings(BaseSettings):
             # Allow comma-separated lists of URLs in FRONTEND_URL env var
             for url in self.FRONTEND_URL.split(","):
                 clean_url = url.strip()
-                if clean_url and clean_url not in origins:
-                    origins.append(clean_url)
+                if clean_url:
+                    base_url = clean_url.rstrip("/")
+                    if base_url and base_url not in origins:
+                        origins.append(base_url)
+                    slash_url = base_url + "/"
+                    if slash_url not in origins:
+                        origins.append(slash_url)
+        # Always include default production Vercel domains for high availability
+        default_prod_domains = [
+            "https://friends-network-isp-billing-system.vercel.app",
+            "https://friends-network-isp-billing-system.vercel.app/",
+            "https://friends-network.vercel.app",
+            "https://friends-network.vercel.app/"
+        ]
+        for d in default_prod_domains:
+            if d not in origins:
+                origins.append(d)
         return origins
 
     model_config = SettingsConfigDict(

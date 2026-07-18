@@ -51,6 +51,9 @@ def run_migrations():
 
 def validate_startup_settings():
     logger.info("Validating startup configuration...")
+    logger.info(f"Resolved FRONTEND_URL: {settings.FRONTEND_URL}")
+    resolved_cors = [str(o).strip() for o in settings.cors_origins if o != "*"]
+    logger.info(f"Resolved cors_origins: {resolved_cors}")
     if settings.ENVIRONMENT == "production":
         if settings.SECRET_KEY == "friends-network-super-secret-key-change-in-production-fnb":
             logger.warning("WARNING: SECRET_KEY is set to the default value in production. Please change it immediately!")
@@ -99,18 +102,6 @@ os.makedirs(os.path.join(static_dir, "documents"), exist_ok=True)
 os.makedirs(os.path.join(static_dir, "logos"), exist_ok=True)
 os.makedirs(os.path.join(static_dir, "receipts"), exist_ok=True)
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
-
-# Enable CORS for the frontend origin (Phase 7)
-cors_origins = [str(origin).strip("/") for origin in settings.cors_origins]
-allow_all = "*" in cors_origins
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=not allow_all,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Exception handlers (Phase 5)
 @app.exception_handler(Exception)
@@ -171,6 +162,46 @@ async def tenant_middleware(request: Request, call_next):
     finally:
         tenant_context.reset(ctx_token)
 
+# Global Exception Catching Middleware (Ensures 500 errors pass through CORSMiddleware)
+@app.middleware("http")
+async def catch_exceptions_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as exc:
+        logger.error(f"Unhandled exception caught in middleware: {exc}", exc_info=True)
+        if settings.ENVIRONMENT == "development":
+            return JSONResponse(
+                status_code=500,
+                content={"detail": str(exc), "type": type(exc).__name__}
+            )
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error"}
+        )
+
+# Latency tracking middleware
+import time
+@app.middleware("http")
+async def latency_tracker_middleware(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    duration = time.time() - start_time
+    observability.log_request_time(duration)
+    return response
+
+# Enable CORS for the frontend origin (Added LAST to wrap all HTTP middlewares as OUTERMOST)
+cors_origins = [str(origin).strip() for origin in settings.cors_origins if origin != "*"]
+allow_all = "*" in settings.cors_origins
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"] if allow_all else cors_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app" if not allow_all else None,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 from backend.app.api.endpoints import websocket as ws_router
@@ -216,16 +247,6 @@ from fastapi.responses import PlainTextResponse
 @app.get("/metrics")
 def get_metrics():
     return PlainTextResponse(observability.get_metrics_text())
-
-# Latency tracking middleware
-import time
-@app.middleware("http")
-async def latency_tracker_middleware(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    duration = time.time() - start_time
-    observability.log_request_time(duration)
-    return response
 
 import asyncio
 from backend.app.core.scheduler import scheduler_loop

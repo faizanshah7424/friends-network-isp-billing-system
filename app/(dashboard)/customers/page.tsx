@@ -207,7 +207,7 @@ export default function CustomersPage() {
         <div className="flex gap-3 w-full sm:w-auto">
           <button
             onClick={handleExportCSV}
-            className="flex flex-1 sm:flex-none h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-card px-4 text-xs font-bold text-slate-800 hover:bg-secondary transition-all dark:border-border dark:text-slate-100"
+            className="flex flex-1 sm:flex-none h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-4 text-xs font-bold text-slate-800 hover:bg-secondary transition-all dark:text-slate-100"
           >
             <Download className="h-4 w-4 text-slate-600 dark:text-slate-300" />
             <span>Export CSV</span>
@@ -223,7 +223,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Filters Card */}
-      <div className="bg-card border border-slate-300 dark:border-border rounded-2xl p-5 shadow-sm space-y-4">
+      <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-4">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
           <SlidersHorizontal className="h-4.5 w-4.5 text-primary" />
           <span>Filters &amp; Search</span>
@@ -301,7 +301,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Customers Data Grid */}
-      <div className="bg-card border border-slate-300 dark:border-border rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
         {loading ? (
           /* Loading State */
           <div className="p-8 flex flex-col items-center justify-center gap-3">
@@ -314,7 +314,7 @@ export default function CustomersPage() {
             <div className="hidden md:block overflow-x-auto max-h-[600px] overflow-y-auto scrollbar-thin">
               <table className="w-full text-left border-collapse relative">
                 <thead>
-                  <tr className="border-b border-slate-300 bg-slate-100 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  <tr className="border-b border-border bg-slate-100 text-xs font-bold text-slate-800 uppercase tracking-wider">
                     <th onClick={() => handleSort('id')} className="p-4 cursor-pointer hover:bg-slate-200/50 select-none sticky top-0 bg-slate-100 z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)] transition-all">
                       <div className="flex items-center gap-1">
                         <span>Customer ID</span>
@@ -383,7 +383,7 @@ export default function CustomersPage() {
                               e.stopPropagation();
                               setActiveMenuRowId(activeMenuRowId === c.id ? null : c.id);
                             }}
-                            className="mx-auto h-8 px-3 rounded-lg border border-slate-300 dark:border-border hover:bg-slate-100 dark:hover:bg-secondary text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-center gap-1 transition-all hover:scale-105 active:scale-95"
+                            className="mx-auto h-8 px-3 rounded-lg border border-border hover:bg-slate-100 dark:hover:bg-secondary text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-center gap-1 transition-all hover:scale-105 active:scale-95"
                           >
                             <span>Actions</span>
                             <span className="text-[9px] text-slate-500">▼</span>
@@ -401,7 +401,7 @@ export default function CustomersPage() {
                                   animate={{ opacity: 1, scale: 1, y: 0 }}
                                   exit={{ opacity: 0, scale: 0.95, y: isNearBottom ? 8 : -8 }}
                                   transition={{ duration: 0.15, ease: 'easeOut' }}
-                                  className={`absolute right-4 z-50 w-44 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-card p-1 shadow-xl text-left ${
+                                  className={`absolute right-4 z-50 w-44 rounded-xl border border-border bg-white dark:bg-card p-1 shadow-xl text-left ${
                                     isNearBottom ? 'bottom-full mb-1' : 'top-full mt-1'
                                   }`}
                                 >
@@ -533,7 +533,7 @@ export default function CustomersPage() {
                           e.stopPropagation();
                           setActiveMenuRowId(activeMenuRowId === c.id ? null : c.id);
                         }}
-                        className="h-8 w-8 rounded-lg border border-slate-300 dark:border-border flex items-center justify-center bg-card hover:bg-slate-100 text-xs transition-colors"
+                        className="h-8 w-8 rounded-lg border border-border flex items-center justify-center bg-card hover:bg-slate-100 text-xs transition-colors"
                       >
                         <span className="text-[9px] text-slate-600">▼</span>
                       </button>
@@ -547,7 +547,7 @@ export default function CustomersPage() {
                               animate={{ opacity: 1, scale: 1, y: 0 }}
                               exit={{ opacity: 0, scale: 0.95, y: isMobileNearBottom ? 8 : -8 }}
                               transition={{ duration: 0.15, ease: 'easeOut' }}
-                              className={`absolute right-0 z-50 w-44 rounded-xl border border-slate-300 dark:border-border bg-white dark:bg-card p-1 shadow-lg text-left ${
+                              className={`absolute right-0 z-50 w-44 rounded-xl border border-border bg-white dark:bg-card p-1 shadow-lg text-left ${
                                 isMobileNearBottom ? 'bottom-full mb-1' : 'top-full mt-1'
                               }`}
                             >
@@ -667,7 +667,7 @@ export default function CustomersPage() {
 
         {/* Pagination Bar & View All Toggle Button */}
         {!loading && filteredCustomers.length > 0 && (
-          <div className="border-t border-slate-300 dark:border-border bg-slate-50/50 dark:bg-secondary/10">
+          <div className="border-t border-border bg-slate-50/50 dark:bg-secondary/10">
             <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3.5 gap-3">
               <span className="text-xs text-slate-700 font-semibold dark:text-slate-300">
                 Showing <span className="font-bold text-slate-900 dark:text-white">{viewAll ? 1 : (currentPage - 1) * itemsPerPage + 1}</span> to{' '}
@@ -682,7 +682,7 @@ export default function CustomersPage() {
                   <button
                     onClick={() => setCurrentPage(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="flex items-center justify-center h-8 w-8 rounded-lg border border-slate-300 bg-card text-slate-700 font-bold hover:text-slate-900 disabled:opacity-40 transition-colors dark:border-border dark:text-slate-300"
+                    className="flex items-center justify-center h-8 w-8 rounded-lg border border-border bg-card text-slate-700 font-bold hover:text-slate-900 disabled:opacity-40 transition-colors dark:text-slate-300"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
@@ -692,7 +692,7 @@ export default function CustomersPage() {
                   <button
                     onClick={() => setCurrentPage(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="flex items-center justify-center h-8 w-8 rounded-lg border border-slate-300 bg-card text-slate-700 font-bold hover:text-slate-900 disabled:opacity-40 transition-colors dark:border-border dark:text-slate-300"
+                    className="flex items-center justify-center h-8 w-8 rounded-lg border border-border bg-card text-slate-700 font-bold hover:text-slate-900 disabled:opacity-40 transition-colors dark:text-slate-300"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
@@ -733,7 +733,7 @@ export default function CustomersPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-md rounded-2xl border border-slate-300 dark:border-border bg-card p-6 shadow-xl z-10 space-y-4"
+              className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl z-10 space-y-4"
             >
               <div className="flex items-start gap-3 text-rose-500">
                 <div className={`p-2 rounded-xl ${
@@ -758,7 +758,7 @@ export default function CustomersPage() {
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   onClick={() => setConfirmDialog(null)}
-                  className="h-9 px-4 rounded-xl border border-slate-300 dark:border-border text-xs font-bold text-slate-800 hover:bg-secondary transition-colors"
+                  className="h-9 px-4 rounded-xl border border-border text-xs font-bold text-slate-800 hover:bg-secondary transition-colors"
                 >
                   Cancel
                 </button>

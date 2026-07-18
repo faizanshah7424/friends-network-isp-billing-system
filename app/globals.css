@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 @theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Roboto Mono, monospace;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   
@@ -98,42 +101,47 @@ body {
 }
 
 /* Cards styling and lift */
-.bg-card, [class*="bg-card"], .card {
-  border: 1px solid var(--border) !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02) !important;
-  border-radius: var(--radius) !important;
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease !important;
+.card,
+main .bg-card:not(aside):not(header),
+main [class*="bg-card"]:not(aside):not(header) {
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+  border-radius: var(--radius);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
 }
 
-.bg-card:not([class*="fixed"]):not([class*="absolute"]):not([class*="z-50"]):hover, 
-[class*="bg-card"]:not([class*="fixed"]):not([class*="absolute"]):not([class*="z-50"]):hover, 
-.card:hover {
+.card:hover,
+main .bg-card:not(aside):not(header):not([class*="fixed"]):not([class*="absolute"]):not([class*="z-50"]):hover, 
+main [class*="bg-card"]:not(aside):not(header):not([class*="fixed"]):not([class*="absolute"]):not([class*="z-50"]):hover {
   transform: translateY(-2px);
-  border-color: #94a3b8 !important;
-  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.03) !important;
+  border-color: #94a3b8;
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
 }
 
 /* Sidebar layout styling */
 aside, .aside {
   background-color: #ffffff !important;
   border-right: 1px solid var(--border) !important;
+  border-radius: 0px !important;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
 /* Sidebar menu item transitions */
-aside a, .aside a {
+aside nav a, .aside nav a {
   border-radius: 12px !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 /* Sidebar active nav item: blue gradient background */
-aside a.bg-primary, .aside a.bg-primary {
+aside nav a.bg-primary, .aside nav a.bg-primary {
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
   box-shadow: 0 4px 12px -3px rgba(37, 99, 235, 0.2) !important;
   color: #ffffff !important;
 }
 
 /* Sidebar inactive nav item hover: soft gray background */
-aside a:not(.bg-primary):hover, .aside a:not(.bg-primary):hover {
+aside nav a:not(.bg-primary):hover, .aside nav a:not(.bg-primary):hover {
   background-color: #f1f5f9 !important;
   color: #0f172a !important;
 }
@@ -178,7 +186,8 @@ button.border:hover, a.btn.border:hover {
 }
 
 /* Tables rounded container and borders */
-.overflow-x-auto, [class*="overflow-x-auto"] {
+main .overflow-x-auto:has(table), 
+main [class*="overflow-x-auto"]:has(table) {
   border-radius: 16px !important;
   border: 1px solid var(--border) !important;
   background-color: #ffffff !important;
@@ -206,7 +215,7 @@ table td {
   padding: 14px 16px !important;
   border-bottom: 1px solid var(--border) !important;
   font-size: 0.875rem !important;
-  color: #0f172a !important; /* Solid Slate-900 text for all table content */
+  color: #0f172a; /* Removed !important to allow utility overrides */
   font-weight: 500 !important;
   transition: background-color 0.15s ease !important;
 }

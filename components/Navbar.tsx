@@ -91,7 +91,7 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-card/80 px-6 backdrop-blur-md">
+    <header className="relative z-40 flex h-16 w-full flex-shrink-0 items-center justify-between border-b border-border bg-card px-6">
       {/* Left Area: Mobile Menu Trigger & Search */}
       <div className="flex flex-1 items-center gap-4">
         <button

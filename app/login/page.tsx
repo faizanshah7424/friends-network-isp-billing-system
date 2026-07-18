@@ -227,7 +227,7 @@ export default function LoginPage() {
 
   return (
     <div 
-      className="min-h-screen w-screen flex flex-col sm:flex-row bg-slate-50 text-slate-900 font-sans relative overflow-y-auto sm:overflow-hidden select-none"
+      className="min-h-screen w-screen flex flex-col sm:flex-row bg-slate-50 text-slate-900 font-sans relative overflow-y-auto sm:overflow-y-auto select-none"
     >
       {/* Premium animated canvas background (restoring floating nodes, glowing dots, and connection lines) */}
       <FiberOpticBackground />

@@ -81,6 +81,9 @@ def seed_db():
                 noor_user.tenant_id = "friends_network"
             db.add(noor_user)
             
+        db.commit()
+        print("Admin user accounts ('muhammad_shahid' and 'noor_jamal') seeded and committed successfully!")
+            
         # 3. Seed Packages
         packages_list = [
             { "id": "pkg-sm-silver", "name": "Silver", "category": "Social Media", "speed": "25 Mbps", "monthly_charges": 1300, "status": "Active", "description": "Social Media plan" },

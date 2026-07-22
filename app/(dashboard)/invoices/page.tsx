@@ -56,7 +56,7 @@ export default function InvoicesPage() {
 
   // Find customer billing address for the detailed invoice view
   const getCustomerAddress = (customerId: string) => {
-    const customer = customers.find((c) => c.id === customerId);
+    const customer = customers.find((c) => c.id === customerId || c.customerId === customerId);
     return customer ? `${customer.address}, ${customer.area}` : '';
   };
 

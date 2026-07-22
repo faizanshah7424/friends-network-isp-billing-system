@@ -49,7 +49,7 @@ export default function CustomerDetailsPage() {
 
   // Find customer
   const customer = useMemo(() => {
-    return customers.find((c) => c.id === id);
+    return customers.find((c) => c.id === id || c.customerId === id);
   }, [customers, id]);
 
   // Find customer's package details
@@ -60,13 +60,15 @@ export default function CustomerDetailsPage() {
 
   // Find related invoices
   const customerInvoices = useMemo(() => {
-    return invoices.filter((inv) => inv.customerId === id);
-  }, [invoices, id]);
+    if (!customer) return invoices.filter((inv) => inv.customerId === id);
+    return invoices.filter((inv) => inv.customerId === id || inv.customerId === customer.id || (customer.customerId && inv.customerId === customer.customerId));
+  }, [invoices, id, customer]);
 
   // Find related payments
   const customerPayments = useMemo(() => {
-    return payments.filter((p) => p.customerId === id);
-  }, [payments, id]);
+    if (!customer) return payments.filter((p) => p.customerId === id);
+    return payments.filter((p) => p.customerId === id || p.customerId === customer.id || (customer.customerId && p.customerId === customer.customerId));
+  }, [payments, id, customer]);
 
   // Next Expiry calculation (30 days from installation date)
   const nextExpiryDate = useMemo(() => {

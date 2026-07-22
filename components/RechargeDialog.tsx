@@ -94,7 +94,7 @@ export default function RechargeDialog() {
     setIsSubmitting(true);
 
     const paymentData = {
-      customerId: customer.id,
+      customerId: customer.customerId || customer.id,
       customerName: customer.name,
       amountReceived,
       paymentMethod,
@@ -162,7 +162,7 @@ export default function RechargeDialog() {
                     <span>Recharge Customer</span>
                   </h2>
                   <p className="text-xs text-blue-50 font-medium">
-                    {customer.name} • Account: <span className="font-bold font-mono">{customer.id}</span>
+                    {customer.name} • Account: <span className="font-bold font-mono">{customer.customerId || customer.id}</span>
                   </p>
                 </div>
                 <button
@@ -483,7 +483,7 @@ export default function RechargeDialog() {
                     <div>
                       <span className="text-slate-400 font-bold uppercase text-[8px] block">Customer Details</span>
                       <p className="font-extrabold text-slate-700 mt-1 text-sm">{customer.name}</p>
-                      <p className="text-slate-500 mt-0.5">Customer ID: {customer.id}</p>
+                      <p className="text-slate-500 mt-0.5">Customer ID: {customer.customerId || customer.id}</p>
                       <p className="text-slate-500 mt-0.5">Helpline: {customer.phone}</p>
                     </div>
                     <div className="text-right">

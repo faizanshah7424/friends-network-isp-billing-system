@@ -90,7 +90,7 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
       ]);
       
       setPackages(pkgs);
-      setCustomers(custs);
+      setCustomers(custs.map((c) => ({ ...c, customerId: c.customerId || c.id })));
       setInvoices(invs);
       setPayments(pays);
       setComplaints(comps);

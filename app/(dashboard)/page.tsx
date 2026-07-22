@@ -64,15 +64,21 @@ export default function DashboardPage() {
     .reduce((sum, c) => sum + c.monthlyCharges, 0);
 
   const todayCollection = payments.reduce((sum, p) => sum + p.amountReceived, 0);
-  const pendingAmount = customers.reduce((sum, c) => sum + c.outstandingBalance, 0);
+  const pendingAmount = customers
+    .filter((c) => c.connectionStatus === 'Active' && c.outstandingBalance > 0)
+    .reduce((sum, c) => sum + c.outstandingBalance, 0);
 
   // Sub Admin Recovery Calculations
   const pendingRecoveryCount = useMemo(() => {
-    return customers.filter((c) => c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending').length;
+    return customers.filter(
+      (c) => c.connectionStatus === 'Active' && (c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending') && c.outstandingBalance > 0
+    ).length;
   }, [customers]);
 
   const totalOutstandingAmount = useMemo(() => {
-    return customers.reduce((sum, c) => sum + c.outstandingBalance, 0);
+    return customers
+      .filter((c) => c.connectionStatus === 'Active' && c.outstandingBalance > 0)
+      .reduce((sum, c) => sum + c.outstandingBalance, 0);
   }, [customers]);
 
   const dueTodayCount = useMemo(() => {
@@ -298,7 +304,7 @@ export default function DashboardPage() {
             </div>
             <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
               {customers
-                .filter((c) => c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending')
+                .filter((c) => c.connectionStatus === 'Active' && (c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending') && c.outstandingBalance > 0)
                 .map((c) => (
                   <div key={c.id} className="p-3.5 rounded-xl border border-border hover:bg-secondary/30 transition-colors flex justify-between items-start">
                     <div className="min-w-0 flex-1">
@@ -306,8 +312,8 @@ export default function DashboardPage() {
                         {c.name}
                       </span>
                       <p className="text-[10px] text-muted-foreground mt-0.5 font-mono truncate">
-                        <Link href={`/customers/${c.id}`} className="text-indigo-500 hover:underline">
-                          {c.id}
+                        <Link href={`/customers/${c.customerId || c.id}`} className="text-indigo-500 hover:underline">
+                          {c.customerId || c.id}
                         </Link>{' '}
                         • {c.phone}
                       </p>
@@ -318,13 +324,13 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-right ml-2">
                       <span className="text-xs font-black text-rose-500 block">PKR {c.outstandingBalance}</span>
-                      <Link href={`/payments?customerId=${c.id}`} className="text-[10px] text-primary font-bold hover:underline inline-block mt-2">
+                      <Link href={`/payments?customerId=${c.customerId || c.id}`} className="text-[10px] text-primary font-bold hover:underline inline-block mt-2">
                         Collect Payment &rarr;
                       </Link>
                     </div>
                   </div>
                 ))}
-              {customers.filter((c) => c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending').length === 0 && (
+              {customers.filter((c) => c.connectionStatus === 'Active' && (c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending') && c.outstandingBalance > 0).length === 0 && (
                 <div className="text-center p-12 text-xs text-muted-foreground">
                   All accounts are paid! Great recovery work!
                 </div>
@@ -563,8 +569,8 @@ export default function DashboardPage() {
                           {c.name}
                         </span>
                         <p className="text-[10px] text-muted-foreground mt-0.5">
-                          <Link href={`/customers/${c.id}`} className="text-indigo-500 hover:underline font-semibold font-mono">
-                            {c.id}
+                          <Link href={`/customers/${c.customerId || c.id}`} className="text-indigo-500 hover:underline font-semibold font-mono">
+                            {c.customerId || c.id}
                           </Link>{' '}
                           • {c.area}
                         </p>

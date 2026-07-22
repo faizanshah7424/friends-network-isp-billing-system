@@ -28,8 +28,9 @@ def get_dashboard_statistics(
     active_cust_list = db.query(Customer).filter(Customer.connection_status == "Active").all()
     monthly_rev = sum(c.monthly_charges for c in active_cust_list)
     
-    # Unpaid invoices count and sum
-    unpaid_invoices = db.query(Invoice).filter(Invoice.payment_status == "Unpaid").all()
+    # Unpaid invoices count and sum (for Active customers only)
+    active_cust_ids = [c.customer_id for c in active_cust_list]
+    unpaid_invoices = db.query(Invoice).filter(Invoice.payment_status == "Unpaid", Invoice.customer_id.in_(active_cust_ids)).all()
     unpaid_count = len(unpaid_invoices)
     unpaid_amount = sum(inv.outstanding_balance for inv in unpaid_invoices)
     

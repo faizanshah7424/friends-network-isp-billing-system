@@ -65,13 +65,10 @@ export default function PaymentsPage() {
   // Pre-select if redirected with customer ID
   useEffect(() => {
     if (targetCustomerId) {
-      const exists = customers.some((c) => c.id === targetCustomerId);
-      if (exists) {
-        setSelectedCustomerId(targetCustomerId);
-        const cust = customers.find((c) => c.id === targetCustomerId);
-        if (cust) {
-          setSearchQuery(`${cust.name} (${cust.id})`);
-        }
+      const cust = customers.find((c) => c.id === targetCustomerId || c.customerId === targetCustomerId);
+      if (cust) {
+        setSelectedCustomerId(cust.id);
+        setSearchQuery(`${cust.name} (${cust.customerId || cust.id})`);
       }
     }
   }, [targetCustomerId, customers]);
@@ -93,25 +90,26 @@ export default function PaymentsPage() {
     const term = searchQuery.toLowerCase();
     let list = [...customers];
     if (isSubAdmin) {
-      list = list.filter((c) => c.outstandingBalance > 0 || c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending');
+      list = list.filter((c) => c.connectionStatus === 'Active' && (c.outstandingBalance > 0 || c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending'));
     }
     return list.filter(
       (c) =>
         c.name.toLowerCase().includes(term) ||
         c.id.toLowerCase().includes(term) ||
+        (c.customerId && c.customerId.toLowerCase().includes(term)) ||
         c.phone.includes(term)
     );
   }, [customers, searchQuery, isSubAdmin]);
 
   // Selected customer details
   const currentCustomer = useMemo(() => {
-    return customers.find((c) => c.id === selectedCustomerId);
+    return customers.find((c) => c.id === selectedCustomerId || c.customerId === selectedCustomerId);
   }, [customers, selectedCustomerId]);
 
   // Receipt customer details
   const receiptCustomer = useMemo(() => {
     if (!recentReceipt) return null;
-    return customers.find((c) => c.id === recentReceipt.customerId);
+    return customers.find((c) => c.id === recentReceipt.customerId || c.customerId === recentReceipt.customerId);
   }, [customers, recentReceipt]);
 
   // Receipt invoice details
@@ -477,20 +475,20 @@ export default function PaymentsPage() {
 
               <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
                 {customers
-                  .filter((c) => c.outstandingBalance > 0 || c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending')
+                  .filter((c) => c.connectionStatus === 'Active' && (c.outstandingBalance > 0 || c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending'))
                   .map((c) => (
                     <div
                       key={c.id}
                       onClick={() => {
                         setSelectedCustomerId(c.id);
-                        setSearchQuery(`${c.name} (${c.id})`);
+                        setSearchQuery(`${c.name} (${c.customerId || c.id})`);
                       }}
                       className="p-3.5 rounded-xl border border-border bg-rose-500/[0.02] hover:bg-secondary/40 cursor-pointer transition-colors space-y-2.5"
                     >
                       <div className="flex justify-between items-start">
                         <div>
                           <span className="text-xs font-bold text-slate-800 hover:underline">{c.name}</span>
-                          <span className="text-[10px] text-indigo-500 font-mono block mt-0.5">{c.id} • {c.phone}</span>
+                          <span className="text-[10px] text-indigo-500 font-mono block mt-0.5">{c.customerId || c.id} • {c.phone}</span>
                         </div>
                         <div className="text-right">
                           <span className="text-xs font-black text-rose-500">PKR {c.outstandingBalance}</span>
@@ -506,7 +504,7 @@ export default function PaymentsPage() {
                       </div>
                     </div>
                   ))}
-                {customers.filter((c) => c.outstandingBalance > 0 || c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending').length === 0 && (
+                {customers.filter((c) => c.connectionStatus === 'Active' && (c.outstandingBalance > 0 || c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending')).length === 0 && (
                   <div className="text-center p-8 text-xs text-muted-foreground">
                     All customer accounts are fully cleared! No pending collections.
                   </div>

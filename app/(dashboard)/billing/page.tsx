@@ -48,13 +48,10 @@ export default function BillingPage() {
   // Handle redirect target pre-select
   useEffect(() => {
     if (targetCustomerId) {
-      const exists = customers.some((c) => c.id === targetCustomerId);
-      if (exists) {
-        setSelectedCustomerId(targetCustomerId);
-        const cust = customers.find((c) => c.id === targetCustomerId);
-        if (cust) {
-          setSearchQuery(`${cust.name} (${cust.id})`);
-        }
+      const cust = customers.find((c) => c.id === targetCustomerId || c.customerId === targetCustomerId);
+      if (cust) {
+        setSelectedCustomerId(cust.id);
+        setSearchQuery(`${cust.name} (${cust.customerId || cust.id})`);
       }
     }
   }, [targetCustomerId, customers]);
@@ -78,13 +75,14 @@ export default function BillingPage() {
       (c) =>
         c.name.toLowerCase().includes(term) ||
         c.id.toLowerCase().includes(term) ||
+        (c.customerId && c.customerId.toLowerCase().includes(term)) ||
         c.phone.includes(term)
     );
   }, [customers, searchQuery]);
 
   // Selected customer details
   const currentCustomer = useMemo(() => {
-    return customers.find((c) => c.id === selectedCustomerId);
+    return customers.find((c) => c.id === selectedCustomerId || c.customerId === selectedCustomerId);
   }, [customers, selectedCustomerId]);
 
   // Calculated Fields
@@ -208,14 +206,14 @@ export default function BillingPage() {
                           type="button"
                           onClick={() => {
                             setSelectedCustomerId(c.id);
-                            setSearchQuery(`${c.name} (${c.id})`);
+                            setSearchQuery(`${c.name} (${c.customerId || c.id})`);
                             setShowSearchDropdown(false);
                           }}
                           className="flex w-full items-center justify-between rounded-lg p-2 text-left hover:bg-secondary transition-colors"
                         >
                           <div>
                             <p className="text-xs font-semibold text-foreground">{c.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{c.id} • {c.phone} • {c.area}</p>
+                            <p className="text-[10px] text-muted-foreground">{c.customerId || c.id} • {c.phone} • {c.area}</p>
                           </div>
                           <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                             c.connectionStatus === 'Active'
@@ -367,7 +365,7 @@ export default function BillingPage() {
                     <div>
                       <span className="text-muted-foreground block font-semibold uppercase text-[8px]">Bill To</span>
                       <p className="font-bold text-foreground mt-0.5">{currentCustomer ? currentCustomer.name : 'Choose Customer'}</p>
-                      <p className="text-muted-foreground mt-0.5">{currentCustomer ? currentCustomer.id : 'FNB-XXXX'}</p>
+                      <p className="text-muted-foreground mt-0.5">{currentCustomer ? (currentCustomer.customerId || currentCustomer.id) : '—'}</p>
                       <p className="text-muted-foreground truncate max-w-[120px]">{currentCustomer ? currentCustomer.address : ''}</p>
                     </div>
                     <div className="text-right">

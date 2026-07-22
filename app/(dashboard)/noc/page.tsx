@@ -280,7 +280,7 @@ export default function NocDashboardPage() {
             <tbody className="divide-y divide-border text-xs md:text-sm">
               {data?.offlineCustomers.map((c) => (
                 <tr key={c.id} className="hover:bg-slate-500/[0.01]">
-                  <td className="px-6 py-3.5 font-mono text-xs font-semibold">{c.id}</td>
+                  <td className="px-6 py-3.5 font-mono text-xs font-semibold">{c.customerId || c.id}</td>
                   <td className="px-6 py-3.5 font-bold text-slate-800 dark:text-slate-200">{c.name}</td>
                   <td className="px-6 py-3.5">{c.phone}</td>
                   <td className="px-6 py-3.5">{c.area}</td>

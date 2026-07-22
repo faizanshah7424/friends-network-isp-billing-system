@@ -60,6 +60,7 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
       (c) =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (c.customerId && c.customerId.toLowerCase().includes(searchQuery.toLowerCase())) ||
         c.phone.includes(searchQuery) ||
         (c.whatsapp && c.whatsapp.includes(searchQuery)) ||
         c.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -132,7 +133,7 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
                 {searchResults.map((c) => (
                   <button
                     key={c.id}
-                    onClick={() => handleSearchResultClick(c.id)}
+                    onClick={() => handleSearchResultClick(c.customerId || c.id)}
                     className="flex w-full items-center justify-between rounded-lg p-2 text-left hover:bg-slate-100 dark:hover:bg-secondary transition-colors"
                   >
                     <div>

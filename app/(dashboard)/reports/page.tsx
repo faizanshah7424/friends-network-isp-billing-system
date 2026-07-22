@@ -177,7 +177,7 @@ export default function ReportsPage() {
     // 2. Payments Result
     let paymentResult = [...payments];
     paymentResult = paymentResult.filter(p => {
-      const cust = customers.find(c => c.id === p.customerId);
+      const cust = customers.find(c => c.id === p.customerId || c.customerId === p.customerId);
       if (areaFilter !== 'All' && cust?.area !== areaFilter) return false;
       if (categoryFilter !== 'All') {
         const pkg = packages.find(pkgObj => pkgObj.id === cust?.packageId || pkgObj.name === cust?.packageName);
@@ -190,7 +190,7 @@ export default function ReportsPage() {
     // 3. Complaints Result
     let complaintResult = [...complaints];
     complaintResult = complaintResult.filter(comp => {
-      const cust = customers.find(c => c.id === comp.customerId);
+      const cust = customers.find(c => c.id === comp.customerId || c.customerId === comp.customerId);
       if (areaFilter !== 'All' && cust?.area !== areaFilter) return false;
       if (categoryFilter !== 'All') {
         const pkg = packages.find(pkgObj => pkgObj.id === cust?.packageId || pkgObj.name === cust?.packageName);
@@ -227,13 +227,13 @@ export default function ReportsPage() {
 
       if (reportType === 'recovery') {
         headers = ['Client ID', 'Client Name', 'Area', 'Plan Rate', 'Paid Status', 'Remaining Balance'];
-        rows = filteredData.clients.map(c => [c.id, c.name, c.area, c.monthlyCharges, c.paymentStatus, c.outstandingBalance]);
+        rows = filteredData.clients.map(c => [c.customerId || c.id, c.name, c.area, c.monthlyCharges, c.paymentStatus, c.outstandingBalance]);
       } else if (reportType === 'customer') {
         headers = ['Client ID', 'Client Name', 'Mobile', 'Address', 'Area', 'Package Name', 'Monthly Charges', 'Joined Date', 'Status'];
-        rows = filteredData.clients.map(c => [c.id, c.name, c.phone, c.address, c.area, c.packageName, c.monthlyCharges, c.connectionDate, c.connectionStatus]);
+        rows = filteredData.clients.map(c => [c.customerId || c.id, c.name, c.phone, c.address, c.area, c.packageName, c.monthlyCharges, c.connectionDate, c.connectionStatus]);
       } else if (reportType === 'outstanding') {
         headers = ['Client ID', 'Client Name', 'Mobile', 'Area', 'Plan Rate', 'Outstanding Debt'];
-        rows = filteredData.clients.filter(c => c.outstandingBalance > 0).map(c => [c.id, c.name, c.phone, c.area, c.monthlyCharges, c.outstandingBalance]);
+        rows = filteredData.clients.filter(c => c.connectionStatus === 'Active' && c.outstandingBalance > 0).map(c => [c.customerId || c.id, c.name, c.phone, c.area, c.monthlyCharges, c.outstandingBalance]);
       } else if (reportType === 'complaint') {
         headers = ['Ticket No', 'Client Name', 'Mobile', 'Area', 'Category', 'Priority', 'Status', 'Date Opened', 'Engineer Notes'];
         rows = filteredData.complaints.map(t => [t.ticketNumber, t.customerName, t.mobileNumber || '', t.area || '', t.category || '', t.priority, t.status, t.dateCreated, t.engineerNotes || '']);
@@ -536,7 +536,7 @@ export default function ReportsPage() {
             <div className="bg-card border border-border p-4.5 rounded-2xl shadow-sm">
               <span className="text-[10px] font-bold text-slate-400 uppercase">Filtered Debt</span>
               <p className="text-xl font-bold mt-1 text-amber-500">
-                PKR {filteredData.clients.reduce((s, c) => s + c.outstandingBalance, 0).toLocaleString()}
+                PKR {filteredData.clients.filter(c => c.connectionStatus === 'Active').reduce((s, c) => s + c.outstandingBalance, 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -616,7 +616,7 @@ export default function ReportsPage() {
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-border text-muted-foreground uppercase font-bold">
-                        <th className="p-3">Client ID</th>
+                        <th className="p-3">ID</th>
                         <th className="p-3">Client Name</th>
                         <th className="p-3">Area Hub</th>
                         <th className="p-3">Plan Rate</th>
@@ -628,10 +628,10 @@ export default function ReportsPage() {
                       {filteredData.clients.map((c) => (
                         <tr key={c.id} className="hover:bg-secondary/20 transition-colors">
                           <td className="p-3 font-semibold text-indigo-500">
-                            <Link href={`/customers/${c.id}`} className="hover:underline">{c.id}</Link>
+                            <Link href={`/customers/${c.customerId || c.id}`} className="hover:underline">{c.customerId || c.id}</Link>
                           </td>
                           <td className="p-3 text-slate-800">
-                            <Link href={`/customers/${c.id}`} className="hover:underline">{c.name}</Link>
+                            <Link href={`/customers/${c.customerId || c.id}`} className="hover:underline">{c.name}</Link>
                           </td>
                           <td className="p-3">{c.area}</td>
                           <td className="p-3">PKR {c.monthlyCharges}</td>
@@ -664,10 +664,10 @@ export default function ReportsPage() {
                       {filteredData.clients.map((c) => (
                         <tr key={c.id} className="hover:bg-secondary/20 transition-colors">
                           <td className="p-3 font-semibold text-indigo-500">
-                            <Link href={`/customers/${c.id}`} className="hover:underline">{c.id}</Link>
+                            <Link href={`/customers/${c.customerId || c.id}`} className="hover:underline">{c.customerId || c.id}</Link>
                           </td>
                           <td className="p-3 text-slate-800">
-                            <Link href={`/customers/${c.id}`} className="hover:underline">{c.name}</Link>
+                            <Link href={`/customers/${c.customerId || c.id}`} className="hover:underline">{c.name}</Link>
                           </td>
                           <td className="p-3">{c.phone}</td>
                           <td className="p-3">{c.area}</td>
@@ -697,13 +697,13 @@ export default function ReportsPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border font-medium text-slate-600">
-                      {filteredData.clients.filter(c => c.outstandingBalance > 0).map((c) => (
+                      {filteredData.clients.filter(c => c.connectionStatus === 'Active' && c.outstandingBalance > 0).map((c) => (
                         <tr key={c.id} className="hover:bg-secondary/20 transition-colors">
                           <td className="p-3 font-semibold text-indigo-500">
-                            <Link href={`/customers/${c.id}`} className="hover:underline">{c.id}</Link>
+                            <Link href={`/customers/${c.customerId || c.id}`} className="hover:underline">{c.customerId || c.id}</Link>
                           </td>
                           <td className="p-3 text-slate-800">
-                            <Link href={`/customers/${c.id}`} className="hover:underline">{c.name}</Link>
+                            <Link href={`/customers/${c.customerId || c.id}`} className="hover:underline">{c.name}</Link>
                           </td>
                           <td className="p-3">{c.phone}</td>
                           <td className="p-3">{c.area}</td>

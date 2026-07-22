@@ -571,7 +571,7 @@ export default function BulkActionsPage() {
     ];
 
     const rows = exportCusts.map((c) => [
-      c.id,
+      c.customerId || c.id,
       c.name,
       c.phone,
       `"${c.address.replace(/"/g, '""')}"`,
@@ -777,7 +777,7 @@ export default function BulkActionsPage() {
                         <td className="p-3">
                           <p className="font-bold text-slate-800 dark:text-slate-200">{c.name}</p>
                           <p className="text-[10px] text-muted-foreground font-semibold">
-                            {c.id} • {c.area} • {c.packageName}
+                            {c.customerId || c.id} • {c.area} • {c.packageName}
                           </p>
                         </td>
                         <td className="p-3 space-y-1">

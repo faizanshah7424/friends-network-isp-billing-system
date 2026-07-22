@@ -587,7 +587,7 @@ export default function ComplaintsPage() {
                     <option value="">Select subscriber...</option>
                     {customers.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name} ({c.id})
+                        {c.name} ({c.customerId || c.id})
                       </option>
                     ))}
                   </select>

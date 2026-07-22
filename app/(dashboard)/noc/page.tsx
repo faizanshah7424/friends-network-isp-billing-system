@@ -49,6 +49,7 @@ interface RouterStatus {
 
 interface OfflineCustomer {
   id: string;
+  customerId?: string;
   name: string;
   area: string;
   phone: string;

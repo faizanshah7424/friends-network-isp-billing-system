@@ -101,6 +101,7 @@ def get_noc_metrics(
         "routers": router_details,
         "offlineCustomers": [{
             "id": c.customer_id,
+            "customerId": c.customer_id,
             "name": c.name,
             "area": c.area,
             "phone": c.phone,

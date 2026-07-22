@@ -254,7 +254,7 @@ export default function BillingPage() {
                   {/* Monthly Charges (read-only indicator) */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-muted-foreground">Package Rate (PKR)</label>
-                    <div className="h-10 w-full rounded-xl border border-border bg-secondary/20 px-3.5 text-xs flex items-center font-bold text-foreground/70">
+                    <div className="h-10 w-full rounded-xl border border-border bg-secondary/20 px-3.5 text-xs flex items-center font-bold text-slate-900 dark:text-white">
                       PKR {monthlyCharges}
                     </div>
                   </div>
@@ -262,7 +262,7 @@ export default function BillingPage() {
                   {/* Previous Due (read-only indicator) */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-muted-foreground">Previous Outstanding (PKR)</label>
-                    <div className="h-10 w-full rounded-xl border border-border bg-secondary/20 px-3.5 text-xs flex items-center font-bold text-rose-500/80">
+                    <div className="h-10 w-full rounded-xl border border-border bg-secondary/20 px-3.5 text-xs flex items-center font-bold text-rose-600 dark:text-rose-400">
                       PKR {previousDue}
                     </div>
                   </div>

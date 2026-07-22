@@ -32,14 +32,14 @@ export default function StatCard({
       className={`relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-300 ${gradient}`}
     >
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</span>
+        <span className="text-sm font-bold text-slate-900 dark:text-white">{title}</span>
         <div className="rounded-xl bg-secondary p-2.5 text-primary">
-          <Icon className="h-5 w-5" />
+          <Icon className="h-5 w-5 text-primary" />
         </div>
       </div>
       
       <div className="mt-4">
-        <h3 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">{value}</h3>
+        <h3 className="text-3xl font-extrabold tracking-tight text-slate-950 dark:text-white">{value}</h3>
         
         {((change !== undefined) || subtext) && (
           <div className="mt-2 flex items-center gap-2">
@@ -58,7 +58,7 @@ export default function StatCard({
               </span>
             )}
             {subtext && (
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{subtext}</span>
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{subtext}</span>
             )}
           </div>
         )}

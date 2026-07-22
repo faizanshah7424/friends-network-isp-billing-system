@@ -170,18 +170,18 @@ export default function DashboardPage() {
             className="h-16 w-16 object-contain" 
           />
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               {isSubAdmin ? 'Recovery & Complaint Desk' : 'Dashboard Overview'}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1 font-medium">
-              Welcome back, <span className="font-semibold text-foreground">{currentUser.name}</span>. 
+            <p className="text-slate-600 dark:text-slate-300 text-sm mt-1 font-medium">
+              Welcome back, <span className="font-semibold text-slate-900 dark:text-white">{currentUser.name}</span>. 
               {isSubAdmin 
                 ? ' Dedicated recovery collections & active support tickets management terminal.' 
                 : ' Real-time financial & operational status for Friends Network.'}
             </p>
           </div>
         </div>
-        <div className="text-xs text-muted-foreground bg-secondary px-3 py-1.5 rounded-xl border border-border">
+        <div className="text-xs text-slate-600 dark:text-slate-300 bg-secondary px-3 py-1.5 rounded-xl border border-border">
           Scope: <span className="font-semibold text-primary">{currentUser.role}</span>
         </div>
       </div>
@@ -299,8 +299,8 @@ export default function DashboardPage() {
           {/* Recovery List */}
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4 text-left">
             <div>
-              <h3 className="font-bold text-base">Unpaid Recovery Accounts</h3>
-              <p className="text-xs text-muted-foreground">Subscribers requiring payment collections</p>
+              <h3 className="font-bold text-base text-slate-900 dark:text-white">Unpaid Recovery Accounts</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Subscribers requiring payment collections</p>
             </div>
             <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
               {customers
@@ -308,22 +308,22 @@ export default function DashboardPage() {
                 .map((c) => (
                   <div key={c.id} className="p-3.5 rounded-xl border border-border hover:bg-secondary/30 transition-colors flex justify-between items-start">
                     <div className="min-w-0 flex-1">
-                      <span className="text-xs font-bold text-foreground block truncate">
+                      <span className="text-xs font-bold text-slate-900 dark:text-white block truncate">
                         {c.name}
                       </span>
-                      <p className="text-[10px] text-muted-foreground mt-0.5 font-mono truncate">
-                        <Link href={`/customers/${c.customerId || c.id}`} className="text-indigo-500 hover:underline">
+                      <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5 font-mono truncate">
+                        <Link href={`/customers/${c.customerId || c.id}`} className="text-indigo-600 dark:text-indigo-400 hover:underline">
                           {c.customerId || c.id}
                         </Link>{' '}
                         • {c.phone}
                       </p>
-                      <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1 truncate">
+                      <p className="text-[10px] text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-1 truncate">
                         <MapPin className="h-3 w-3" />
                         <span>{c.address}</span>
                       </p>
                     </div>
                     <div className="text-right ml-2">
-                      <span className="text-xs font-black text-rose-500 block">PKR {c.outstandingBalance}</span>
+                      <span className="text-xs font-black text-rose-600 dark:text-rose-400 block">PKR {c.outstandingBalance}</span>
                       <Link href={`/payments?customerId=${c.customerId || c.id}`} className="text-[10px] text-primary font-bold hover:underline inline-block mt-2">
                         Collect Payment &rarr;
                       </Link>
@@ -331,7 +331,7 @@ export default function DashboardPage() {
                   </div>
                 ))}
               {customers.filter((c) => c.connectionStatus === 'Active' && (c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending') && c.outstandingBalance > 0).length === 0 && (
-                <div className="text-center p-12 text-xs text-muted-foreground">
+                <div className="text-center p-12 text-xs text-slate-600 dark:text-slate-400">
                   All accounts are paid! Great recovery work!
                 </div>
               )}
@@ -341,8 +341,8 @@ export default function DashboardPage() {
           {/* Support Tickets */}
           <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4 text-left">
             <div>
-              <h3 className="font-bold text-base">Assigned Outage Tickets</h3>
-              <p className="text-xs text-muted-foreground">Support complaints assigned to your dashboard</p>
+              <h3 className="font-bold text-base text-slate-900 dark:text-white">Assigned Outage Tickets</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Support complaints assigned to your dashboard</p>
             </div>
             <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
               {complaints
@@ -350,11 +350,11 @@ export default function DashboardPage() {
                 .map((comp) => (
                   <div key={comp.id} className="p-3.5 rounded-xl border border-border hover:bg-secondary/30 transition-colors flex justify-between items-center">
                     <div className="min-w-0 flex-1">
-                      <Link href="/complaints" className="text-xs font-bold text-foreground hover:underline hover:text-primary transition-colors block truncate">
+                      <Link href="/complaints" className="text-xs font-bold text-slate-900 dark:text-white hover:underline hover:text-primary transition-colors block truncate">
                         {comp.customerName}
                       </Link>
-                      <p className="text-[10px] text-muted-foreground mt-0.5 font-mono truncate">{comp.ticketNumber} • {comp.category || 'Outage'}</p>
-                      <p className="text-[10px] text-rose-500 font-medium truncate mt-1 leading-normal">
+                      <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5 font-mono truncate">{comp.ticketNumber} • {comp.category || 'Outage'}</p>
+                      <p className="text-[10px] text-rose-600 dark:text-rose-400 font-medium truncate mt-1 leading-normal">
                         &ldquo;{comp.issue}&rdquo;
                       </p>
                     </div>
@@ -365,7 +365,7 @@ export default function DashboardPage() {
                   </div>
                 ))}
               {complaints.filter((comp) => comp.assignedEngineer === 'Noor Jamal' || comp.assignedEngineer === currentUser.name).length === 0 && (
-                <div className="text-center p-12 text-xs text-muted-foreground">
+                <div className="text-center p-12 text-xs text-slate-600 dark:text-slate-400">
                   No tickets currently assigned to you.
                 </div>
               )}
@@ -379,10 +379,10 @@ export default function DashboardPage() {
             <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-sm text-left">
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h3 className="text-lg font-bold">Revenue & Collections</h3>
-                  <p className="text-xs text-muted-foreground">Projected Revenue vs actual payments</p>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Revenue & Collections</h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Projected Revenue vs actual payments</p>
                 </div>
-                <div className="flex gap-4 text-xs font-medium">
+                <div className="flex gap-4 text-xs font-medium text-slate-700 dark:text-slate-300">
                   <span className="flex items-center gap-1.5">
                     <span className="h-3 w-3 rounded bg-indigo-500" /> Projected
                   </span>
@@ -405,8 +405,8 @@ export default function DashboardPage() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                    <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
-                    <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} />
+                    <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} />
+                    <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
                     <Tooltip contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)' }} />
                     <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
                     <Area type="monotone" dataKey="collections" stroke="#34d399" strokeWidth={2} fillOpacity={1} fill="url(#colorColl)" />
@@ -418,8 +418,8 @@ export default function DashboardPage() {
             {/* Package Distribution Chart */}
             <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col justify-between text-left">
               <div>
-                <h3 className="text-lg font-bold">Package Distribution</h3>
-                <p className="text-xs text-muted-foreground">Market share of active bandwidth packages</p>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Package Distribution</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400">Market share of active bandwidth packages</p>
               </div>
               <div className="h-64 w-full relative flex items-center justify-center">
                 {packageChartData.length > 0 ? (
@@ -442,19 +442,19 @@ export default function DashboardPage() {
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <span className="text-xs text-muted-foreground">No package data available</span>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">No package data available</span>
                 )}
                 <div className="absolute flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold">{totalCustomers}</span>
-                  <span className="text-[10px] text-muted-foreground font-semibold uppercase">Total Users</span>
+                  <span className="text-2xl font-bold text-slate-900 dark:text-white">{totalCustomers}</span>
+                  <span className="text-[10px] text-slate-600 dark:text-slate-400 font-semibold uppercase">Total Users</span>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 {packageChartData.slice(0, 4).map((entry, i) => (
                   <div key={entry.name} className="flex items-center gap-1.5 truncate">
                     <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                    <span className="text-muted-foreground truncate">{entry.name}</span>
-                    <span className="font-semibold ml-auto">{entry.value}</span>
+                    <span className="text-slate-600 dark:text-slate-400 truncate">{entry.name}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white ml-auto">{entry.value}</span>
                   </div>
                 ))}
               </div>
@@ -466,8 +466,8 @@ export default function DashboardPage() {
             {/* Quick Actions Panel */}
             <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4 text-left">
               <div>
-                <h3 className="text-lg font-bold">Quick Actions</h3>
-                <p className="text-xs text-muted-foreground">Administrative workflow shortcuts</p>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Quick Actions</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400">Administrative workflow shortcuts</p>
               </div>
               <div className="grid grid-cols-1 gap-3">
                 <Link
@@ -478,10 +478,10 @@ export default function DashboardPage() {
                     <UserPlus className="h-5 w-5" />
                   </div>
                   <div className="flex-1 text-left">
-                    <h4 className="text-sm font-semibold">Register New Customer</h4>
-                    <p className="text-xs text-muted-foreground">Set up account and GPON ONU details</p>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">Register New Customer</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">Set up account and GPON ONU details</p>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-4 w-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                 </Link>
 
                 <Link
@@ -492,10 +492,10 @@ export default function DashboardPage() {
                     <Receipt className="h-5 w-5" />
                   </div>
                   <div className="flex-1 text-left">
-                    <h4 className="text-sm font-semibold">Generate Monthly Bill</h4>
-                    <p className="text-xs text-muted-foreground">Create recurring internet invoices</p>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">Generate Monthly Bill</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">Create recurring internet invoices</p>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-4 w-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                 </Link>
 
                 <Link
@@ -506,10 +506,10 @@ export default function DashboardPage() {
                     <CreditCard className="h-5 w-5" />
                   </div>
                   <div className="flex-1 text-left">
-                    <h4 className="text-sm font-semibold">Collect Bill Payment</h4>
-                    <p className="text-xs text-muted-foreground">Record EasyPaisa, Cash, or Bank receipts</p>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">Collect Bill Payment</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">Record EasyPaisa, Cash, or Bank receipts</p>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-4 w-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                 </Link>
 
                 <Link
@@ -520,10 +520,10 @@ export default function DashboardPage() {
                     <MessageSquarePlus className="h-5 w-5" />
                   </div>
                   <div className="flex-1 text-left">
-                    <h4 className="text-sm font-semibold">File Outage Complaint</h4>
-                    <p className="text-xs text-muted-foreground">Assign support engineer to optical line tickets</p>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">File Outage Complaint</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">Assign support engineer to optical line tickets</p>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-4 w-4 text-slate-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                 </Link>
               </div>
             </div>
@@ -532,24 +532,24 @@ export default function DashboardPage() {
             <div className="lg:col-span-2 bg-card border border-border rounded-2xl p-6 shadow-sm grid gap-6 md:grid-cols-2 text-left">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-bold">Recent Payments</h3>
-                  <Link href="/payments" className="text-xs text-primary hover:underline">View All</Link>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Recent Payments</h3>
+                  <Link href="/payments" className="text-xs text-primary hover:underline font-bold">View All</Link>
                 </div>
                 <div className="space-y-3">
                   {recentPayments.map((p) => (
                     <div key={p.id} className="flex justify-between items-center p-3 rounded-xl border border-border hover:bg-secondary/40 transition-colors">
                       <div>
-                        <span className="text-xs font-semibold text-foreground block">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white block">
                           {p.customerName}
                         </span>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          <Link href={`/customers/${p.customerId}`} className="text-indigo-500 hover:underline font-semibold font-mono">
+                        <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5">
+                          <Link href={`/customers/${p.customerId}`} className="text-indigo-600 dark:text-indigo-400 hover:underline font-bold font-mono">
                             {p.customerId}
                           </Link>{' '}
                           • {p.paymentMethod} • Ref: {p.referenceNumber || 'N/A'}
                         </p>
                       </div>
-                      <span className="text-xs font-bold text-emerald-500">+PKR {p.amountReceived}</span>
+                      <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">+PKR {p.amountReceived}</span>
                     </div>
                   ))}
                 </div>
@@ -558,18 +558,18 @@ export default function DashboardPage() {
               {/* New Customers */}
               <div className="space-y-4 text-left">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-bold">New Registrations</h3>
-                  <Link href="/customers" className="text-xs text-primary hover:underline">View All</Link>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">New Registrations</h3>
+                  <Link href="/customers" className="text-xs text-primary hover:underline font-bold">View All</Link>
                 </div>
                 <div className="space-y-3">
                   {newCustomers.map((c) => (
                     <div key={c.id} className="flex justify-between items-center p-3 rounded-xl border border-border hover:bg-secondary/40 transition-colors">
                       <div>
-                        <span className="text-xs font-semibold text-foreground block">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white block">
                           {c.name}
                         </span>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          <Link href={`/customers/${c.customerId || c.id}`} className="text-indigo-500 hover:underline font-semibold font-mono">
+                        <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5">
+                          <Link href={`/customers/${c.customerId || c.id}`} className="text-indigo-600 dark:text-indigo-400 hover:underline font-bold font-mono">
                             {c.customerId || c.id}
                           </Link>{' '}
                           • {c.area}
@@ -589,8 +589,8 @@ export default function DashboardPage() {
       {!isSubAdmin && (
         <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4 text-left">
           <div>
-            <h3 className="text-lg font-bold">Latest System Logs</h3>
-            <p className="text-xs text-muted-foreground">Recent changes and audit logs</p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Latest System Logs</h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Recent changes and audit logs</p>
           </div>
           <div className="space-y-3">
             {latestActivities.map((act, i) => (
@@ -607,9 +607,9 @@ export default function DashboardPage() {
                     <p className="text-xs font-bold text-slate-900 dark:text-white">
                       {act.title} — {act.customerName} (<Link href={`/customers/${act.customerDbId || act.customerId}`} className="text-indigo-600 dark:text-indigo-400 hover:underline font-bold font-mono">{act.customerId}</Link>)
                     </p>
-                    <span className="text-[10px] text-muted-foreground">{act.date}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">{act.date}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1 leading-normal">{act.description}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-normal">{act.description}</p>
                 </div>
               </div>
             ))}

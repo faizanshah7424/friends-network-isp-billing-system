@@ -325,7 +325,7 @@ def generate_report_pdf(report_title: str, summary_rows: list, headers: list, da
     avail_width = 770
     col_w = avail_width / max(col_count, 1)
 
-    t_report = Table(table_content, colWidths=[col_w] * col_count)
+    t_report = Table(table_content, colWidths=[col_w] * col_count, repeatRows=1)
     t_report.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f5f9')),
         ('BOTTOMPADDING', (0,0), (-1,-1), 5),

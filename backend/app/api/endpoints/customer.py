@@ -37,22 +37,30 @@ def get_customer(
 def register_customer(
     customer_in: CustomerCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(PermissionChecker(["Super Admin"]))
+    current_user: User = Depends(PermissionChecker(["Super Admin", "Sub Admin"]))
 ):
     # Check duplicate Customer ID
     dup_id = customer_repository.get_by_customer_id(db, customer_id=customer_in.customer_id)
     if dup_id:
-        raise HTTPException(status_code=400, detail="Customer ID already registered")
+        raise HTTPException(status_code=400, detail=f"Customer ID '{customer_in.customer_id}' is already registered")
 
     # Check duplicate Mobile
     dup_phone = customer_repository.get_by_phone(db, phone=customer_in.phone)
     if dup_phone:
-        raise HTTPException(status_code=400, detail="Mobile number already registered")
+        raise HTTPException(status_code=400, detail=f"Mobile number '{customer_in.phone}' is already registered")
 
-    # Validate package
+    # Safe Package Lookup with fallbacks
     pkg = package_repository.get(db, id=customer_in.package_id)
     if not pkg:
-        raise HTTPException(status_code=400, detail="Invalid package selected")
+        pkg = db.query(Package).filter(
+            (Package.id == customer_in.package_id) | 
+            (Package.name == customer_in.package_id) | 
+            (Package.name == customer_in.package_name)
+        ).first()
+
+    pkg_id = pkg.id if pkg else customer_in.package_id
+    pkg_name = pkg.name if pkg else (customer_in.package_name or "Standard Package")
+    pkg_charges = pkg.monthly_charges if pkg else (customer_in.monthly_charges or 2000)
 
     # Construct customer object
     cust_db = Customer(
@@ -62,21 +70,21 @@ def register_customer(
         whatsapp=customer_in.whatsapp or customer_in.phone,
         address=customer_in.address,
         area=customer_in.area,
-        package_id=pkg.id,
-        package_name=pkg.name,
-        monthly_charges=pkg.monthly_charges,
+        package_id=pkg_id,
+        package_name=pkg_name,
+        monthly_charges=pkg_charges,
         installation_charges=customer_in.installation_charges or 0,
         router_mac=customer_in.router_mac,
         onu_number=customer_in.onu_number,
         connection_date=customer_in.connection_date,
         connection_status=customer_in.connection_status or "Active",
         payment_status=customer_in.payment_status or "Unpaid",
-        outstanding_balance=customer_in.outstanding_balance or 0,
+        outstanding_balance=customer_in.outstanding_balance or (customer_in.installation_charges or 0),
         timeline=[
             {
                 "id": str(uuid.uuid4()),
                 "title": "Connection Activated",
-                "description": f"ONT registered and line activated under {pkg.name} package.",
+                "description": f"ONT registered and line activated under {pkg_name} package.",
                 "date": customer_in.connection_date,
                 "type": "success"
             }

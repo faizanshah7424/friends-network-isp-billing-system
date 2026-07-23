@@ -96,6 +96,18 @@ export default function AddCustomerPage() {
       return;
     }
 
+    // Validate unique Phone Number
+    const duplicatePhone = customers.some(
+      (c) => c.phone.trim() === data.phone.trim()
+    );
+    if (duplicatePhone) {
+      setError('phone', {
+        type: 'manual',
+        message: 'Mobile number already registered in the system',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {

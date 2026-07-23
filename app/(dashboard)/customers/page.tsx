@@ -21,20 +21,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CustomersPage() {
   const router = useRouter();
-  const { customers, suspendCustomer, activateCustomer, deleteCustomer, openRecharge, currentUser } = useBillingSystem();
+  const { customers, packages, suspendCustomer, activateCustomer, deleteCustomer, openRecharge, currentUser } = useBillingSystem();
   const [activeMenuRowId, setActiveMenuRowId] = useState<string | null>(null);
   
   // Simulated Loading State
   const [loading, setLoading] = useState(true);
 
   // Filters state
-  const [searchTerm, setSearchTerm] = useState('');
+  const [customerIdFilter, setCustomerIdFilter] = useState('');
+  const [nameFilter, setNameFilter] = useState('');
+  const [mobileFilter, setMobileFilter] = useState('');
   const [areaFilter, setAreaFilter] = useState('All');
+  const [packageFilter, setPackageFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [paymentFilter, setPaymentFilter] = useState('All');
   
-  // Sorting state
-  const [sortField, setSortField] = useState<keyof Customer>('id');
+  // Sorting state (default: real Customer ID ascending)
+  const [sortField, setSortField] = useState<keyof Customer>('customerId');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // Pagination & View Mode state
@@ -50,6 +53,18 @@ export default function CustomersPage() {
     customerName: string;
   } | null>(null);
 
+  // Clear all active filters
+  const handleClearFilters = () => {
+    setCustomerIdFilter('');
+    setNameFilter('');
+    setMobileFilter('');
+    setAreaFilter('All');
+    setPackageFilter('All');
+    setStatusFilter('All');
+    setPaymentFilter('All');
+    setCurrentPage(1);
+  };
+
   // Simulate dashboard loading
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 500);
@@ -62,6 +77,13 @@ export default function CustomersPage() {
     return ['All', ...Array.from(new Set(allAreas))];
   }, [customers]);
 
+  // Extract unique packages for filtering
+  const packageOptions = useMemo(() => {
+    const pkgsFromCustomers = customers.map((c) => c.packageName).filter(Boolean);
+    const pkgsFromContext = (packages || []).map((p) => p.name);
+    return ['All', ...Array.from(new Set([...pkgsFromCustomers, ...pkgsFromContext]))];
+  }, [customers, packages]);
+
   // Handle sorting trigger
   const handleSort = (field: keyof Customer) => {
     if (sortField === field) {
@@ -72,7 +94,13 @@ export default function CustomersPage() {
     }
   };
 
-  // Filtered & Sorted Customers
+  // Natural alphanumeric string comparison
+  const naturalCompare = (aStr: string, bStr: string) => {
+    return aStr.localeCompare(bStr, undefined, { numeric: true, sensitivity: 'base' });
+  };
+
+  // Filtered & Sorted Customers Pipeline:
+  // Load Data -> Customer ID -> Name -> Mobile -> Area -> Package -> Status -> Payment Status -> Natural Sort -> Pagination
   const filteredCustomers = useMemo(() => {
     let result = [...customers];
 
@@ -80,42 +108,65 @@ export default function CustomersPage() {
       result = result.filter((c) => c.paymentStatus === 'Unpaid' || c.paymentStatus === 'Pending');
     }
 
-    // Search term match
-    if (searchTerm.trim() !== '') {
-      const term = searchTerm.toLowerCase();
+    // 1. Customer ID Filter (strictly against customer.customerId)
+    if (customerIdFilter.trim() !== '') {
+      const cidTerm = customerIdFilter.trim().toLowerCase();
       result = result.filter(
-        (c) =>
-          c.name.toLowerCase().includes(term) ||
-          c.id.toLowerCase().includes(term) ||
-          (c.customerId && c.customerId.toLowerCase().includes(term)) ||
-          c.phone.includes(term) ||
-          (c.address && c.address.toLowerCase().includes(term))
+        (c) => c.customerId && c.customerId.toLowerCase().includes(cidTerm)
       );
     }
 
-    // Area filter
+    // 2. Customer Name Filter
+    if (nameFilter.trim() !== '') {
+      const nTerm = nameFilter.trim().toLowerCase();
+      result = result.filter(
+        (c) => c.name && c.name.toLowerCase().includes(nTerm)
+      );
+    }
+
+    // 3. Mobile Number Filter
+    if (mobileFilter.trim() !== '') {
+      const mTerm = mobileFilter.trim();
+      result = result.filter(
+        (c) => c.phone && c.phone.includes(mTerm)
+      );
+    }
+
+    // 4. Area Filter
     if (areaFilter !== 'All') {
       result = result.filter((c) => c.area === areaFilter);
     }
 
-    // Status filter
+    // 5. Package Filter
+    if (packageFilter !== 'All') {
+      result = result.filter((c) => c.packageName === packageFilter);
+    }
+
+    // 6. Connection Status Filter
     if (statusFilter !== 'All') {
       result = result.filter((c) => c.connectionStatus === statusFilter);
     }
 
-    // Payment filter
+    // 7. Payment Status Filter
     if (paymentFilter !== 'All') {
       result = result.filter((c) => c.paymentStatus === paymentFilter);
     }
 
-    // Sort
+    // 8. Natural Sort on customer.customerId (or selected field)
     result.sort((a, b) => {
+      if (sortField === 'customerId') {
+        const idA = a.customerId || '';
+        const idB = b.customerId || '';
+        const cmp = naturalCompare(idA, idB);
+        return sortDirection === 'asc' ? cmp : -cmp;
+      }
+
       let aVal = a[sortField] ?? '';
       let bVal = b[sortField] ?? '';
 
       if (typeof aVal === 'string' && typeof bVal === 'string') {
-        aVal = aVal.toLowerCase();
-        bVal = bVal.toLowerCase();
+        const cmp = naturalCompare(aVal, bVal);
+        return sortDirection === 'asc' ? cmp : -cmp;
       }
 
       if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
@@ -124,7 +175,19 @@ export default function CustomersPage() {
     });
 
     return result;
-  }, [customers, searchTerm, areaFilter, statusFilter, paymentFilter, sortField, sortDirection, currentUser]);
+  }, [
+    customers,
+    customerIdFilter,
+    nameFilter,
+    mobileFilter,
+    packageFilter,
+    areaFilter,
+    statusFilter,
+    paymentFilter,
+    sortField,
+    sortDirection,
+    currentUser,
+  ]);
 
   // Paginated Customers
   const paginatedCustomers = useMemo(() => {
@@ -152,7 +215,7 @@ export default function CustomersPage() {
     ];
 
     const rows = filteredCustomers.map((c) => [
-      c.customerId || c.id,
+      c.customerId || '',
       c.name,
       c.phone,
       `"${c.address.replace(/"/g, '""')}"`,
@@ -224,27 +287,78 @@ export default function CustomersPage() {
 
       {/* Filters Card */}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-          <SlidersHorizontal className="h-4.5 w-4.5 text-primary" />
-          <span>Filters &amp; Search</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+            <SlidersHorizontal className="h-4.5 w-4.5 text-primary" />
+            <span>Filters &amp; Search</span>
+          </div>
+          {(customerIdFilter || nameFilter || mobileFilter || areaFilter !== 'All' || packageFilter !== 'All' || statusFilter !== 'All' || paymentFilter !== 'All') && (
+            <button
+              onClick={handleClearFilters}
+              className="text-xs font-bold text-primary hover:underline transition-all"
+            >
+              Clear Filters
+            </button>
+          )}
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Search Box */}
+
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+          {/* 1. Search by Customer ID Input (Primary / Auto-focused) */}
           <div className="relative">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
+              autoFocus
               type="text"
-              placeholder="Search by name, ID, phone..."
-              value={searchTerm}
+              placeholder="Search by Customer ID"
+              value={customerIdFilter}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.preventDefault();
+              }}
               onChange={(e) => {
-                setSearchTerm(e.target.value);
+                setCustomerIdFilter(e.target.value);
                 setCurrentPage(1);
               }}
               className="h-10 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-xs font-semibold text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
             />
           </div>
 
-          {/* Area Select */}
+          {/* 2. Customer Name Search Input */}
+          <div className="relative">
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Customer Name"
+              value={nameFilter}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.preventDefault();
+              }}
+              onChange={(e) => {
+                setNameFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-10 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-xs font-semibold text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+            />
+          </div>
+
+          {/* 3. Mobile Number Search Input */}
+          <div className="relative">
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Mobile Number"
+              value={mobileFilter}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.preventDefault();
+              }}
+              onChange={(e) => {
+                setMobileFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-10 w-full rounded-xl border border-border bg-card pl-10 pr-4 text-xs font-semibold text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+            />
+          </div>
+
+          {/* 4. Area Select */}
           <div>
             <select
               value={areaFilter}
@@ -263,7 +377,26 @@ export default function CustomersPage() {
             </select>
           </div>
 
-          {/* Connection Status Select */}
+          {/* 5. Package Select */}
+          <div>
+            <select
+              value={packageFilter}
+              onChange={(e) => {
+                setPackageFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="h-10 w-full rounded-xl border border-border bg-card px-3 text-xs font-semibold text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+            >
+              <option value="All">All Packages</option>
+              {packageOptions.filter((p) => p !== 'All').map((pkg) => (
+                <option key={pkg} value={pkg}>
+                  {pkg}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 6. Connection Status Select */}
           <div>
             <select
               value={statusFilter}
@@ -279,7 +412,7 @@ export default function CustomersPage() {
             </select>
           </div>
 
-          {/* Payment Status Select */}
+          {/* 7. Payment Status Select */}
           {currentUser.role !== 'Sub Admin' && (
             <div>
               <select
@@ -300,6 +433,16 @@ export default function CustomersPage() {
         </div>
       </div>
 
+      {/* Customer Counter Summary Bar */}
+      {!loading && (
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            Showing <span className="font-black text-slate-900 dark:text-white">{filteredCustomers.length}</span> of{' '}
+            <span className="font-black text-slate-900 dark:text-white">{customers.length}</span> Customers
+          </span>
+        </div>
+      )}
+
       {/* Customers Data Grid */}
       <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
         {loading ? (
@@ -315,10 +458,10 @@ export default function CustomersPage() {
               <table className="w-full text-left border-collapse relative">
                 <thead>
                   <tr className="border-b border-border bg-slate-100 text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    <th onClick={() => handleSort('id')} className="p-4 cursor-pointer hover:bg-slate-200/50 select-none sticky top-0 bg-slate-100 z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)] transition-all">
+                    <th onClick={() => handleSort('customerId')} className="p-4 cursor-pointer hover:bg-slate-200/50 select-none sticky top-0 bg-slate-100 z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)] transition-all">
                       <div className="flex items-center gap-1">
                         <span>Customer ID</span>
-                        <ArrowUpDown className={`h-3 w-3 ${sortField === 'id' ? 'text-primary font-bold' : 'text-slate-400'}`} />
+                        <ArrowUpDown className={`h-3 w-3 ${sortField === 'customerId' ? 'text-primary font-bold' : 'text-slate-400'}`} />
                       </div>
                     </th>
                     <th onClick={() => handleSort('name')} className="p-4 cursor-pointer hover:bg-slate-200/50 select-none sticky top-0 bg-slate-100 z-15 shadow-[inset_0_-1px_0_0_rgba(0,0,0,0.1)] transition-all">
@@ -349,7 +492,7 @@ export default function CustomersPage() {
                 <tbody className="divide-y divide-slate-200 dark:divide-border text-sm">
                   {paginatedCustomers.map((c, idx) => {
                     const isNearBottom = idx >= paginatedCustomers.length - 3 && paginatedCustomers.length > 3;
-                    const displayId = c.customerId || c.id;
+                    const displayId = c.customerId || '';
                     return (
                       <motion.tr 
                         key={c.id} 
@@ -503,7 +646,7 @@ export default function CustomersPage() {
             <div className="md:hidden divide-y divide-slate-200 dark:divide-border overflow-y-auto scrollbar-none">
               {paginatedCustomers.map((c, idx) => {
                 const isMobileNearBottom = idx >= paginatedCustomers.length - 2 && paginatedCustomers.length > 2;
-                const displayId = c.customerId || c.id;
+                const displayId = c.customerId || '';
                 return (
                   <div key={c.id} className="flex items-center justify-between p-3.5 hover:bg-slate-50 dark:hover:bg-secondary/15 transition-all duration-150 gap-3">
                     <div className="flex-1 min-w-0 space-y-1 text-left">
@@ -647,20 +790,15 @@ export default function CustomersPage() {
           /* Empty State */
           <div className="p-12 text-center">
             <AlertTriangle className="h-10 w-10 text-slate-500 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-900">No customers found</h3>
+            <h3 className="text-base font-bold text-slate-900">No customer found.</h3>
             <p className="text-xs text-slate-600 font-medium mt-1 max-w-xs mx-auto">
               We couldn&apos;t find any records matching your search queries or filter requirements.
             </p>
             <button
-              onClick={() => {
-                setSearchTerm('');
-                setAreaFilter('All');
-                setStatusFilter('All');
-                setPaymentFilter('All');
-              }}
+              onClick={handleClearFilters}
               className="mt-4 text-xs font-bold text-primary hover:underline"
             >
-              Clear all filters
+              Clear Filters
             </button>
           </div>
         )}
@@ -750,7 +888,7 @@ export default function CustomersPage() {
                   <p className="text-xs text-slate-700 dark:text-slate-300 font-medium mt-1 leading-normal">
                     Are you sure you want to {confirmDialog.type} connection and billing details for{' '}
                     <span className="font-bold text-slate-900 dark:text-white">{confirmDialog.customerName}</span> (
-                    {customers.find((c) => c.id === confirmDialog.customerId)?.customerId || confirmDialog.customerId})?
+                    {customers.find((c) => c.id === confirmDialog.customerId)?.customerId})?
                   </p>
                 </div>
               </div>

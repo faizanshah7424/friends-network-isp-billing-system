@@ -10,8 +10,8 @@ class CustomerBase(CamelModel):
     address: str
     area: str
     package_id: str
-    package_name: str
-    monthly_charges: int
+    package_name: Optional[str] = None
+    monthly_charges: Optional[int] = None
     installation_charges: Optional[int] = 0
     router_mac: Optional[str] = None
     onu_number: Optional[str] = None

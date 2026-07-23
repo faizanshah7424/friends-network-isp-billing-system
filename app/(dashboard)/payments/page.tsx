@@ -397,19 +397,29 @@ export default function PaymentsPage() {
               )}
 
               {/* Payment Method */}
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 sm:col-span-2">
                 <label className="text-xs font-semibold text-muted-foreground">Payment Method *</label>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value as any)}
-                  required
-                  className="h-10 w-full rounded-xl border border-border bg-secondary/30 px-3.5 text-xs outline-none transition-all focus:border-primary focus:bg-card"
-                >
-                  <option value="Cash">Cash</option>
-                  <option value="Bank">Bank Transfer</option>
-                  <option value="JazzCash">JazzCash</option>
-                  <option value="EasyPaisa">EasyPaisa</option>
-                </select>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: 'Cash', label: 'Cash' },
+                    { id: 'Bank', label: 'Bank Transfer' },
+                    { id: 'JazzCash', label: 'JazzCash' },
+                    { id: 'EasyPaisa', label: 'EasyPaisa' },
+                  ].map((method) => (
+                    <button
+                      key={method.id}
+                      type="button"
+                      onClick={() => setPaymentMethod(method.id as any)}
+                      className={`h-12 min-h-[48px] rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer ${
+                        paymentMethod === method.id
+                          ? 'border-primary bg-primary/10 text-primary ring-2 ring-primary/20 shadow-sm'
+                          : 'border-border bg-card text-muted-foreground hover:bg-secondary/40'
+                      }`}
+                    >
+                      <span>{method.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Reference Number */}
@@ -691,13 +701,15 @@ export default function PaymentsPage() {
                 >
                   Close Receipt
                 </button>
-                <button
-                  onClick={handleDownloadFakePDF}
+                <a
+                  href={`https://friends-network-isp-billing-system-production.up.railway.app/api/v1/payments/${recentReceipt.id}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-4 text-xs font-semibold hover:bg-secondary transition-all"
                 >
                   <Download className="h-4 w-4" />
                   <span>Download PDF</span>
-                </button>
+                </a>
                 <button
                   onClick={handlePrint}
                   className="flex h-9 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/95 transition-all"

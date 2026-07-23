@@ -8,11 +8,8 @@ import {
   Receipt,
   Bell,
   Sun,
-  Moon,
   Menu,
   X,
-  User,
-  Check,
   CheckCheck,
 } from 'lucide-react';
 import { useBillingSystem } from '@/lib/context';
@@ -25,16 +22,18 @@ interface NavbarProps {
 
 export default function Navbar({ onMenuToggle }: NavbarProps) {
   const router = useRouter();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const { customers, notifications, markNotificationAsRead, markAllNotificationsAsRead } = useBillingSystem();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<typeof customers>([]);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const mobileInputRef = useRef<HTMLInputElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
@@ -43,7 +42,12 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
-        inputRef.current?.focus();
+        if (window.innerWidth < 640) {
+          setMobileSearchOpen(true);
+          setTimeout(() => mobileInputRef.current?.focus(), 100);
+        } else {
+          inputRef.current?.focus();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -89,58 +93,72 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
     router.push(`/customers/${customerId}`);
     setSearchQuery('');
     setShowSearchDropdown(false);
+    setMobileSearchOpen(false);
   };
 
   return (
-    <header className="relative z-40 flex h-16 w-full flex-shrink-0 items-center justify-between border-b border-border bg-card px-6">
+    <header className="sticky top-0 z-30 flex h-16 w-full flex-shrink-0 items-center justify-between border-b border-border bg-card/95 backdrop-blur-md px-4 sm:px-6">
       {/* Left Area: Mobile Menu Trigger & Search */}
-      <div className="flex flex-1 items-center gap-4">
+      <div className="flex flex-1 items-center gap-3">
         <button
           onClick={onMenuToggle}
-          className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground md:hidden"
+          className="rounded-xl p-2 text-muted-foreground hover:bg-secondary hover:text-foreground md:hidden active:scale-95 transition-all"
+          aria-label="Toggle Mobile Menu"
         >
-          <Menu className="h-6 w-6" />
+          <Menu className="h-5 w-5" />
         </button>
 
-        {/* Global Customer Search */}
+        {/* Desktop Search Box */}
         <div ref={searchRef} className="relative w-full max-w-md hidden sm:block">
           <div className="relative">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search customer (Name, ID, Mobile)..."
+              placeholder="Search customer (ID, Name, Mobile)..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setShowSearchDropdown(true);
               }}
               onFocus={() => setShowSearchDropdown(true)}
-              className="h-10 w-full rounded-xl border border-border bg-secondary/50 pl-10 pr-12 text-sm outline-none transition-all focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20"
+              className="h-10 w-full rounded-xl border border-border bg-secondary/50 pl-10 pr-12 text-xs outline-none transition-all focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20"
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 rounded bg-[#18181B] border border-border px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground pointer-events-none">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 rounded bg-secondary border border-border px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground pointer-events-none">
               <span>Ctrl</span><span>K</span>
             </div>
           </div>
 
-          {/* Search Dropdown Results */}
+          {/* Desktop Search Dropdown Results */}
           {showSearchDropdown && searchResults.length > 0 && (
-            <div className="absolute top-11 z-50 w-full rounded-xl border border-border bg-card p-2 shadow-lg">
+            <div className="absolute top-11 z-50 w-full rounded-xl border border-border bg-card p-2 shadow-xl">
               <span className="px-2 py-1 text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
-                Matching Customers
+                Matching Customers (ID, Name, Mobile, Area, Package, MAC)
               </span>
               <div className="mt-1 space-y-0.5">
                 {searchResults.map((c) => (
                   <button
                     key={c.id}
                     onClick={() => handleSearchResultClick(c.customerId || c.id)}
-                    className="flex w-full items-center justify-between rounded-lg p-2 text-left hover:bg-slate-100 dark:hover:bg-secondary transition-colors"
+                    className="flex w-full items-center justify-between rounded-lg p-2.5 text-left hover:bg-secondary transition-colors"
                   >
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">{c.name}</p>
-                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 font-mono">{c.customerId || c.id} • {c.area}</p>
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">{c.name}</span>
+                        <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                          {c.customerId || c.id}
+                        </span>
+                      </div>
+                      <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 font-mono">
+                        {c.phone} • {c.area} • {c.packageName}
+                      </p>
+                      {c.routerMac && (
+                        <p className="text-[10px] text-muted-foreground font-mono">
+                          MAC: {c.routerMac}
+                        </p>
+                      )}
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                       c.connectionStatus === 'Active'
                         ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                         : 'bg-rose-500/10 text-rose-600 dark:text-rose-400'
@@ -155,18 +173,85 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
 
           {showSearchDropdown && searchQuery.trim() !== '' && searchResults.length === 0 && (
             <div className="absolute top-11 z-50 w-full rounded-xl border border-border bg-card p-4 text-center shadow-lg">
-              <p className="text-sm text-muted-foreground">No customers found matching &ldquo;{searchQuery}&rdquo;</p>
+              <p className="text-xs text-muted-foreground">No customers found matching &ldquo;{searchQuery}&rdquo;</p>
             </div>
           )}
         </div>
       </div>
 
+      {/* Mobile Collapsible Search Trigger */}
+      <button
+        onClick={() => {
+          setMobileSearchOpen(!mobileSearchOpen);
+          if (!mobileSearchOpen) {
+            setTimeout(() => mobileInputRef.current?.focus(), 100);
+          }
+        }}
+        className="sm:hidden rounded-xl p-2 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors mr-1"
+        aria-label="Toggle Mobile Search"
+      >
+        <Search className="h-5 w-5" />
+      </button>
+
+      {/* Mobile Fullscreen / Collapsible Search Bar */}
+      {mobileSearchOpen && (
+        <div className="sm:hidden absolute inset-x-0 top-0 z-50 bg-card border-b border-border p-3 shadow-lg flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              ref={mobileInputRef}
+              type="text"
+              placeholder="Search by ID, Name, Mobile..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-10 w-full rounded-xl border border-border bg-secondary/50 pl-10 pr-4 text-xs outline-none focus:border-primary"
+            />
+          </div>
+          <button
+            onClick={() => {
+              setMobileSearchOpen(false);
+              setSearchQuery('');
+            }}
+            className="p-2 rounded-xl text-muted-foreground hover:bg-secondary text-xs font-bold"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          {/* Mobile Search Dropdown Results */}
+          {searchQuery.trim() !== '' && (
+            <div className="absolute left-0 right-0 top-16 z-50 bg-card border-b border-border p-2 shadow-2xl max-h-72 overflow-y-auto">
+              {searchResults.length > 0 ? (
+                searchResults.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => handleSearchResultClick(c.customerId || c.id)}
+                    className="flex w-full items-center justify-between rounded-lg p-2.5 text-left border-b border-border/40 hover:bg-secondary"
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-slate-900 dark:text-white">{c.name}</p>
+                      <p className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 font-mono">{c.customerId || c.id} • {c.phone}</p>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-secondary font-bold">
+                      {c.area}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <div className="p-4 text-center text-xs text-muted-foreground">
+                  No customers found matching &ldquo;{searchQuery}&rdquo;
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Right Area: Actions & Profile */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Quick Add Customer */}
         <Link
           href="/customers/add"
-          className="hidden md:flex h-9 items-center gap-1.5 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/95 hover:shadow-primary/25 transition-all"
+          className="hidden md:flex h-9 items-center gap-1.5 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/95 transition-all"
         >
           <Plus className="h-4 w-4" />
           <span>Add Customer</span>
@@ -181,13 +266,10 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
           <span>Create Bill</span>
         </Link>
 
-        {/* Border separator */}
-        <div className="h-5 w-px bg-border hidden md:block" />
-
-        {/* Theme Indicator (Sun for Light Theme) */}
+        {/* Theme Indicator */}
         <div
           className="rounded-xl p-2 text-blue-500 bg-blue-50 transition-colors"
-          title="Premium Light Theme Active"
+          title="Premium Theme Active"
         >
           <Sun className="h-5 w-5" />
         </div>
@@ -196,7 +278,7 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
         <div ref={notifRef} className="relative">
           <button
             onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-            className="relative rounded-xl p-2 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+            className="relative rounded-xl p-2 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors active:scale-95"
           >
             <Bell className="h-5 w-5" />
             {unreadCount > 0 && (

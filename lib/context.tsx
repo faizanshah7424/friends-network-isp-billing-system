@@ -172,16 +172,17 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
     setRechargeCustomerId(null);
   };
 
-  const addCustomer = (customerData: Omit<Customer, 'outstandingBalance' | 'timeline' | 'notes' | 'packageName'>) => {
+  const addCustomer = async (customerData: Omit<Customer, 'outstandingBalance' | 'timeline' | 'notes' | 'packageName'>) => {
     const pkg = packages.find((p) => p.id === customerData.packageId);
     const packageName = pkg ? pkg.name : 'Unknown Package';
-    const monthlyCharges = pkg ? pkg.monthlyCharges : 0;
+    const monthlyCharges = customerData.monthlyCharges || (pkg ? pkg.monthlyCharges : 0);
     
     const newCustomer: Customer = {
       ...customerData,
+      customerId: customerData.id,
       packageName,
       monthlyCharges,
-      outstandingBalance: 0,
+      outstandingBalance: customerData.installationCharges || 0,
       timeline: [
         {
           id: `t-${Date.now()}`,
@@ -197,27 +198,31 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
     // Optimistic state update
     setCustomers((prev) => [newCustomer, ...prev]);
 
-    // Async REST post
-    customerService.createCustomer({
-      customerId: customerData.id,
-      name: customerData.name,
-      phone: customerData.phone,
-      whatsapp: customerData.whatsapp,
-      address: customerData.address,
-      area: customerData.area,
-      packageId: customerData.packageId,
-      installationCharges: customerData.installationCharges,
-      routerMac: customerData.routerMac,
-      onuNumber: customerData.onuNumber,
-      connectionDate: customerData.connectionDate,
-      connectionStatus: 'Active',
-    }).then(() => {
-      fetchData();
-    }).catch((err) => {
+    try {
+      await customerService.createCustomer({
+        customerId: customerData.id,
+        name: customerData.name,
+        phone: customerData.phone,
+        whatsapp: customerData.whatsapp,
+        address: customerData.address,
+        area: customerData.area,
+        packageId: customerData.packageId,
+        packageName: packageName,
+        monthlyCharges: monthlyCharges,
+        installationCharges: customerData.installationCharges || 0,
+        routerMac: customerData.routerMac,
+        onuNumber: customerData.onuNumber,
+        connectionDate: customerData.connectionDate,
+        connectionStatus: customerData.connectionStatus || 'Active',
+        paymentStatus: customerData.paymentStatus || 'Unpaid',
+      });
+      await fetchData();
+      return newCustomer;
+    } catch (err) {
       console.error('Failed to create customer record on backend:', err);
-    });
-
-    return newCustomer;
+      setCustomers((prev) => prev.filter((c) => c.id !== customerData.id));
+      throw err;
+    }
   };
 
   const updateCustomer = (updatedCustomer: Customer) => {
@@ -472,7 +477,7 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
       });
   };
 
-  const addComplaint = (complaintData: Omit<Complaint, 'id' | 'ticketNumber' | 'status' | 'dateCreated' | 'timeline'>) => {
+  const addComplaint = async (complaintData: Omit<Complaint, 'id' | 'ticketNumber' | 'status' | 'dateCreated' | 'timeline'>) => {
     const nextTicket = `TIC-${1000 + complaints.length + 1}`;
     const newComplaint: Complaint = {
       ...complaintData,
@@ -491,18 +496,22 @@ export function BillingSystemProvider({ children }: { children: React.ReactNode 
 
     setComplaints((prev) => [newComplaint, ...prev]);
 
-    complaintService.createComplaint({
-      customerId: complaintData.customerId,
-      mobileNumber: complaintData.mobileNumber || '',
-      category: complaintData.category || 'General Outage',
-      issue: complaintData.issue,
-      priority: complaintData.priority,
-      assignedEngineer: complaintData.assignedEngineer === 'None' ? null : complaintData.assignedEngineer,
-    }).then(() => {
-      fetchData();
-    }).catch((err) => {
-      console.error(err);
-    });
+    try {
+      await complaintService.createComplaint({
+        customerId: complaintData.customerId,
+        mobileNumber: complaintData.mobileNumber || '',
+        category: complaintData.category || 'General Outage',
+        issue: complaintData.issue,
+        priority: complaintData.priority,
+        assignedEngineer: complaintData.assignedEngineer === 'None' ? null : complaintData.assignedEngineer,
+      });
+      await fetchData();
+      return newComplaint;
+    } catch (err) {
+      console.error('Failed to file complaint ticket:', err);
+      setComplaints((prev) => prev.filter((c) => c.id !== newComplaint.id));
+      throw err;
+    }
   };
 
   const updateComplaintStatus = (

@@ -18,11 +18,16 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import MobileCustomerCard from '@/components/MobileCustomerCard';
+import EmptyState from '@/components/ui/EmptyState';
+import { SkeletonCard, SkeletonTableRow } from '@/components/ui/Skeleton';
+import CustomerQuickModal from '@/components/CustomerQuickModal';
 
 export default function CustomersPage() {
   const router = useRouter();
   const { customers, packages, suspendCustomer, activateCustomer, deleteCustomer, openRecharge, currentUser } = useBillingSystem();
   const [activeMenuRowId, setActiveMenuRowId] = useState<string | null>(null);
+  const [quickPreviewCustomer, setQuickPreviewCustomer] = useState<Customer | null>(null);
   
   // Simulated Loading State
   const [loading, setLoading] = useState(true);
@@ -53,6 +58,40 @@ export default function CustomersPage() {
     customerName: string;
   } | null>(null);
 
+  // Bulk selection state (Task 6)
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  // Table Density state (Task 11)
+  const [tableDensity, setTableDensity] = useState<'default' | 'comfortable' | 'compact'>('default');
+  // Preset filter state (Task 7)
+  const [activePreset, setActivePreset] = useState<string>('All');
+
+  // Apply Filter Preset (Task 7)
+  const applyPreset = (presetName: string) => {
+    setActivePreset(presetName);
+    setCustomerIdFilter('');
+    setNameFilter('');
+    setMobileFilter('');
+    if (presetName === 'Active') {
+      setStatusFilter('Active');
+      setPaymentFilter('All');
+      setPackageFilter('All');
+    } else if (presetName === 'Pending Bills') {
+      setStatusFilter('All');
+      setPaymentFilter('Unpaid');
+      setPackageFilter('All');
+    } else if (presetName === 'Fiber') {
+      setStatusFilter('All');
+      setPaymentFilter('All');
+      setPackageFilter('Fiber 20 Mbps');
+    } else {
+      setStatusFilter('All');
+      setPaymentFilter('All');
+      setPackageFilter('All');
+      setAreaFilter('All');
+    }
+    setCurrentPage(1);
+  };
+
   // Clear all active filters
   const handleClearFilters = () => {
     setCustomerIdFilter('');
@@ -62,7 +101,24 @@ export default function CustomersPage() {
     setPackageFilter('All');
     setStatusFilter('All');
     setPaymentFilter('All');
+    setActivePreset('All');
+    setSelectedIds([]);
     setCurrentPage(1);
+  };
+
+  // Bulk Selection Helpers (Task 6)
+  const toggleSelectRow = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (allIds: string[]) => {
+    if (selectedIds.length === allIds.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(allIds);
+    }
   };
 
   // Simulate dashboard loading
@@ -285,6 +341,49 @@ export default function CustomersPage() {
         </div>
       </div>
 
+      {/* Saved Filter Presets Bar (Task 7) & Table Density Bar (Task 11) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-secondary/30 border border-border p-3 rounded-2xl">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <span className="text-[10px] font-bold uppercase text-muted-foreground whitespace-nowrap">Presets:</span>
+          {[
+            { id: 'All', label: 'All Subscribers' },
+            { id: 'Active', label: 'Active Connections' },
+            { id: 'Pending Bills', label: 'Pending Bills' },
+            { id: 'Fiber', label: 'Fiber Package' },
+          ].map((preset) => (
+            <button
+              key={preset.id}
+              onClick={() => applyPreset(preset.id)}
+              className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+                activePreset === preset.id
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-card border border-border text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Table Density Selector (Task 11) */}
+        <div className="flex items-center gap-1.5 self-end sm:self-auto">
+          <span className="text-[10px] font-bold uppercase text-muted-foreground hidden sm:inline">Density:</span>
+          {(['comfortable', 'default', 'compact'] as const).map((density) => (
+            <button
+              key={density}
+              onClick={() => setTableDensity(density)}
+              className={`text-[10px] font-bold capitalize px-2 py-1 rounded-lg border transition-all cursor-pointer ${
+                tableDensity === density
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-card text-muted-foreground hover:bg-secondary'
+              }`}
+            >
+              {density}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Filters Card */}
       <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
@@ -292,10 +391,10 @@ export default function CustomersPage() {
             <SlidersHorizontal className="h-4.5 w-4.5 text-primary" />
             <span>Filters &amp; Search</span>
           </div>
-          {(customerIdFilter || nameFilter || mobileFilter || areaFilter !== 'All' || packageFilter !== 'All' || statusFilter !== 'All' || paymentFilter !== 'All') && (
+          {(customerIdFilter || nameFilter || mobileFilter || areaFilter !== 'All' || packageFilter !== 'All' || statusFilter !== 'All' || paymentFilter !== 'All' || activePreset !== 'All') && (
             <button
               onClick={handleClearFilters}
-              className="text-xs font-bold text-primary hover:underline transition-all"
+              className="text-xs font-bold text-primary hover:underline transition-all cursor-pointer"
             >
               Clear Filters
             </button>
@@ -433,23 +532,48 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {/* Customer Counter Summary Bar */}
-      {!loading && (
-        <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-            Showing <span className="font-black text-slate-900 dark:text-white">{filteredCustomers.length}</span> of{' '}
-            <span className="font-black text-slate-900 dark:text-white">{customers.length}</span> Customers
+      {/* Floating Bulk Actions Toolbar (Task 6) */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white rounded-2xl p-3 shadow-2xl border border-slate-700/80 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <span className="text-xs font-bold px-3 py-1 bg-primary rounded-xl">
+            {selectedIds.length} Selected
           </span>
+          <div className="h-4 w-px bg-slate-700" />
+          <button
+            onClick={() => handleExportCSV()}
+            className="text-xs font-bold hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span>Export CSV</span>
+          </button>
+          <button
+            onClick={() => setSelectedIds([])}
+            className="text-xs font-bold text-rose-400 hover:text-rose-300 transition-colors ml-2 cursor-pointer"
+          >
+            Clear Selection
+          </button>
         </div>
       )}
 
       {/* Customers Data Grid */}
       <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
         {loading ? (
-          /* Loading State */
-          <div className="p-8 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="h-8 w-8 text-primary animate-spin" />
-            <span className="text-sm text-slate-700 font-bold">Fetching customer directory...</span>
+          /* Skeleton Loading State (Task 8) */
+          <div className="p-4 space-y-4">
+            <div className="md:hidden space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <SkeletonCard key={i} />
+              ))}
+            </div>
+            <div className="hidden md:block">
+              <table className="w-full">
+                <tbody>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <SkeletonTableRow key={i} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : paginatedCustomers.length > 0 ? (
           <>
@@ -500,12 +624,20 @@ export default function CustomersPage() {
                         whileHover={{ y: -0.5 }}
                       >
                         <td className="p-4 font-bold font-mono text-indigo-600 dark:text-indigo-400">
-                          <Link href={`/customers/${c.id}`} className="hover:underline hover:text-indigo-700 transition-colors">
+                          <button
+                            onClick={() => setQuickPreviewCustomer(c)}
+                            className="hover:underline text-left hover:text-indigo-700 transition-colors font-mono font-bold cursor-pointer"
+                          >
                             {displayId}
-                          </Link>
+                          </button>
                         </td>
                         <td className="p-4 font-extrabold text-slate-900 dark:text-slate-100">
-                          {c.name}
+                          <button
+                            onClick={() => setQuickPreviewCustomer(c)}
+                            className="hover:text-primary text-left font-extrabold transition-colors cursor-pointer"
+                          >
+                            {c.name}
+                          </button>
                         </td>
                         <td className="p-4 text-xs font-bold text-slate-800 dark:text-slate-200 max-w-[150px] truncate">{c.packageName}</td>
                         <td className="p-4 text-right font-black text-slate-900 dark:text-slate-100">PKR {c.monthlyCharges.toLocaleString()}</td>
@@ -642,165 +774,21 @@ export default function CustomersPage() {
               </table>
             </div>
 
-            {/* Mobile View */}
-            <div className="md:hidden divide-y divide-slate-200 dark:divide-border overflow-y-auto scrollbar-none">
-              {paginatedCustomers.map((c, idx) => {
-                const isMobileNearBottom = idx >= paginatedCustomers.length - 2 && paginatedCustomers.length > 2;
-                const displayId = c.customerId || '';
-                return (
-                  <div key={c.id} className="flex items-center justify-between p-3.5 hover:bg-slate-50 dark:hover:bg-secondary/15 transition-all duration-150 gap-3">
-                    <div className="flex-1 min-w-0 space-y-1 text-left">
-                      <div className="flex items-center gap-1.5">
-                        <Link href={`/customers/${c.id}`} className="text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded hover:underline">
-                          {displayId}
-                        </Link>
-                        <span className="font-extrabold text-slate-900 dark:text-slate-100 text-xs truncate block">
-                          {c.name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-[10px] text-slate-700 dark:text-slate-300 font-semibold">
-                        <span className="truncate max-w-[100px]">{c.packageName}</span>
-                        <span>•</span>
-                        <span>{c.phone}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                      <StatusBadge status={c.paymentStatus} />
-                      <StatusBadge status={c.connectionStatus} />
-                    </div>
-
-                    <div className="relative flex-shrink-0">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveMenuRowId(activeMenuRowId === c.id ? null : c.id);
-                        }}
-                        className="h-8 w-8 rounded-lg border border-border flex items-center justify-center bg-card hover:bg-slate-100 text-xs transition-colors"
-                      >
-                        <span className="text-[9px] text-slate-600">▼</span>
-                      </button>
-
-                      <AnimatePresence>
-                        {activeMenuRowId === c.id && (
-                          <>
-                            <div className="fixed inset-0 z-35" onClick={() => setActiveMenuRowId(null)} />
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.95, y: isMobileNearBottom ? 8 : -8 }}
-                              animate={{ opacity: 1, scale: 1, y: 0 }}
-                              exit={{ opacity: 0, scale: 0.95, y: isMobileNearBottom ? 8 : -8 }}
-                              transition={{ duration: 0.15, ease: 'easeOut' }}
-                              className={`absolute right-0 z-50 w-44 rounded-xl border border-border bg-white dark:bg-card p-1 shadow-lg text-left ${
-                                isMobileNearBottom ? 'bottom-full mb-1' : 'top-full mt-1'
-                              }`}
-                            >
-                            <button
-                              onClick={() => {
-                                router.push(`/customers/${c.id}`);
-                                setActiveMenuRowId(null);
-                              }}
-                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 transition-colors"
-                            >
-                              View Profile
-                            </button>
-                            <button
-                              onClick={() => {
-                                router.push(`/customers/${c.id}?tab=notes`);
-                                setActiveMenuRowId(null);
-                              }}
-                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 transition-colors"
-                            >
-                              Edit Details
-                            </button>
-                            <button
-                              onClick={() => {
-                                openRecharge(c.id);
-                                setActiveMenuRowId(null);
-                              }}
-                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-bold text-blue-700 dark:text-blue-400 hover:bg-blue-50 transition-colors"
-                            >
-                              Update Bill
-                            </button>
-                            <button
-                              onClick={() => {
-                                router.push(`/payments?customerId=${c.id}`);
-                                setActiveMenuRowId(null);
-                              }}
-                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 transition-colors"
-                            >
-                              Payment History
-                            </button>
-                            {c.connectionStatus === 'Active' ? (
-                              <button
-                                onClick={() => {
-                                  setConfirmDialog({
-                                    isOpen: true,
-                                    type: 'suspend',
-                                    customerId: c.id,
-                                    customerName: c.name,
-                                  });
-                                  setActiveMenuRowId(null);
-                                }}
-                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 hover:bg-amber-50 transition-colors"
-                              >
-                                Suspend Connection
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setConfirmDialog({
-                                    isOpen: true,
-                                    type: 'activate',
-                                    customerId: c.id,
-                                    customerName: c.name,
-                                  });
-                                  setActiveMenuRowId(null);
-                                }}
-                                className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 transition-colors"
-                              >
-                                Activate Connection
-                              </button>
-                            )}
-                            <div className="h-px bg-slate-200 dark:bg-border my-1" />
-                            <button
-                              onClick={() => {
-                                  setConfirmDialog({
-                                    isOpen: true,
-                                    type: 'delete',
-                                    customerId: c.id,
-                                    customerName: c.name,
-                                  });
-                                  setActiveMenuRowId(null);
-                              }}
-                              className="flex w-full items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold text-rose-700 dark:text-rose-400 hover:bg-rose-50 transition-colors"
-                            >
-                              Delete Client
-                            </button>
-                          </motion.div>
-                        </>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </div>
-              );
-              })}
+            {/* Mobile View (Task 1, 3, 4, 5, 6, 7) */}
+            <div className="md:hidden space-y-3 p-3 bg-secondary/15">
+              {paginatedCustomers.map((c) => (
+                <MobileCustomerCard key={c.id} customer={c} />
+              ))}
             </div>
           </>
         ) : (
-          /* Empty State */
-          <div className="p-12 text-center">
-            <AlertTriangle className="h-10 w-10 text-slate-500 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-900">No customer found.</h3>
-            <p className="text-xs text-slate-600 font-medium mt-1 max-w-xs mx-auto">
-              We couldn&apos;t find any records matching your search queries or filter requirements.
-            </p>
-            <button
-              onClick={handleClearFilters}
-              className="mt-4 text-xs font-bold text-primary hover:underline"
-            >
-              Clear Filters
-            </button>
-          </div>
+          /* Empty State (Task 10) */
+          <EmptyState
+            title="No customer found."
+            description="We couldn't find any records matching your search queries or filter requirements."
+            actionLabel="Clear All Filters"
+            onAction={handleClearFilters}
+          />
         )}
 
         {/* Pagination Bar & View All Toggle Button */}
@@ -915,6 +903,12 @@ export default function CustomersPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Customer Quick Action Popup */}
+      <CustomerQuickModal
+        customer={quickPreviewCustomer}
+        onClose={() => setQuickPreviewCustomer(null)}
+      />
     </div>
   );
 }

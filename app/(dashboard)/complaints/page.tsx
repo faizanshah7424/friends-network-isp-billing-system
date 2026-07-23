@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import EmptyState from '@/components/ui/EmptyState';
 
 export default function ComplaintsPage() {
   const {
@@ -59,13 +60,6 @@ export default function ComplaintsPage() {
   const filteredTickets = useMemo(() => {
     let result = [...complaints];
 
-    // Role-based filter: Sub Admin only views assigned complaints
-    if (currentUser.role === 'Sub Admin') {
-      result = result.filter(
-        (t) => t.assignedEngineer === 'Noor Jamal' || t.assignedEngineer === currentUser.name
-      );
-    }
-
     // Tab-based status filter
     if (activeTab === 'Active') {
       result = result.filter(
@@ -100,7 +94,7 @@ export default function ComplaintsPage() {
     }
 
     return result;
-  }, [complaints, customers, searchTerm, activeTab, priorityFilter, currentUser]);
+  }, [complaints, customers, searchTerm, activeTab, priorityFilter]);
 
   // Default selection on load
   useEffect(() => {
@@ -200,15 +194,13 @@ export default function ComplaintsPage() {
           </p>
         </div>
 
-        {currentUser.role === 'Super Admin' && (
-          <button
-            onClick={handleOpenDialog}
-            className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/95 transition-all w-full sm:w-auto"
-          >
-            <Plus className="h-4.5 w-4.5" />
-            <span>File Support Ticket</span>
-          </button>
-        )}
+        <button
+          onClick={handleOpenDialog}
+          className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/95 transition-all w-full sm:w-auto cursor-pointer"
+        >
+          <Plus className="h-4.5 w-4.5" />
+          <span>File Support Ticket</span>
+        </button>
       </div>
 
       {/* Main Workspace grid */}
@@ -326,10 +318,11 @@ export default function ComplaintsPage() {
                 );
               })
             ) : (
-              <div className="bg-card border border-border rounded-2xl p-12 text-center text-xs text-muted-foreground">
-                <AlertCircle className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                <span>No support tickets found matching criteria.</span>
-              </div>
+              <EmptyState
+                icon={AlertCircle}
+                title="No support tickets found"
+                description="No support tickets match your active filter criteria or search query."
+              />
             )}
           </div>
         </div>

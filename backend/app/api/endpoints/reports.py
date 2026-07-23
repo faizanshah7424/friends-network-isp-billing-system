@@ -120,3 +120,54 @@ def get_filtered_customers(
             for c in customers
         ]
     }
+
+@router.get("/export-pdf")
+def export_reports_pdf(
+    area: Optional[str] = None,
+    connectionStatus: Optional[str] = None,
+    paymentStatus: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    from fastapi.responses import Response
+    from backend.app.services.pdf_generator import generate_report_pdf
+
+    query = db.query(Customer)
+    if area and area != "All":
+        query = query.filter(Customer.area == area)
+    if connectionStatus and connectionStatus != "All":
+        query = query.filter(Customer.connection_status == connectionStatus)
+    if paymentStatus and paymentStatus != "All":
+        query = query.filter(Customer.payment_status == paymentStatus)
+
+    customers = query.all()
+
+    summary_rows = [
+        ("Total Records", str(len(customers))),
+        ("Area Filter", area or "All"),
+        ("Connection Status", connectionStatus or "All"),
+        ("Payment Status", paymentStatus or "All"),
+        ("Generated Date", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    ]
+
+    headers = ["Customer ID", "Name", "Phone", "Area", "Package", "Monthly Charges", "Connection Status", "Payment Status", "Balance"]
+    data_rows = []
+    for c in customers:
+        data_rows.append([
+            c.customer_id,
+            c.name,
+            c.phone,
+            c.area,
+            c.package_name,
+            f"PKR {c.monthly_charges}",
+            c.connection_status,
+            c.payment_status,
+            f"PKR {c.outstanding_balance}"
+        ])
+
+    pdf_bytes = generate_report_pdf("Customer Directory Summary Report", summary_rows, headers, data_rows)
+    filename = f"Report_Customers_{datetime.now().strftime('%Y%m%d')}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"inline; filename={filename}"}
+    )

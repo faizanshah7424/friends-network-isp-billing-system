@@ -114,6 +114,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
               key={item.href}
               href={item.href}
               onClick={onClose}
+              aria-label={item.label}
+              aria-current={active ? 'page' : undefined}
               className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 group ${
                 active
                   ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/20 font-bold'
@@ -161,7 +163,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             </div>
           </div>
 
-          <Link href="/login" className="rounded-lg p-2 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500 transition-colors">
+          <Link href="/login" aria-label="Log Out" className="rounded-lg p-2 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500 transition-colors">
             <LogOut className="h-4 w-4" />
           </Link>
         </div>

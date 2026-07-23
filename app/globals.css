@@ -271,7 +271,7 @@ input[type="text"], input[type="number"], input[type="email"], input[type="passw
   background-color: #ffffff !important;
   color: #0f172a !important;
   font-weight: 500 !important;
-  padding: 10px 14px !important;
+  padding: 10px 14px;
   font-size: 0.875rem !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
   outline: none !important;
@@ -306,9 +306,27 @@ input:focus, select:focus, textarea:focus {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 15mm;
+    margin: 10mm;
   }
   
+  @page landscape-page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  @page receipt-page {
+    size: A5 portrait;
+    margin: 8mm;
+  }
+
+  .print-landscape {
+    page: landscape-page;
+  }
+
+  .print-receipt {
+    page: receipt-page;
+  }
+
   html, body {
     height: auto !important;
     overflow: visible !important;
@@ -337,7 +355,7 @@ input:focus, select:focus, textarea:focus {
     box-shadow: none !important;
   }
 
-  /* Target the active printable modal card specifically and force it to be static and take full A4 width */
+  /* Target the active printable modal card specifically and force it to be static and take full width */
   .fixed.inset-0.z-50, [class*="z-50"] {
     position: static !important;
     display: block !important;
@@ -359,6 +377,16 @@ input:focus, select:focus, textarea:focus {
     padding: 0 !important;
     background: white !important;
     page-break-inside: avoid !important;
+  }
+
+  table {
+    width: 100% !important;
+    page-break-inside: auto !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
   }
 }
 
@@ -447,3 +475,22 @@ input:focus, select:focus, textarea:focus {
     transform: none !important;
   }
 }
+
+/* Mobile Safe Area & Touch Utilities */
+.safe-pb {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+.safe-pt {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+.safe-bottom-offset {
+  bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
+}
+

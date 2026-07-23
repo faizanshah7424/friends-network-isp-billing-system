@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { getRecentCustomers, RecentCustomerItem } from '@/lib/recentAndFavorites';
 import {
   AreaChart,
   Area,
@@ -44,9 +45,11 @@ import {
 export default function DashboardPage() {
   const { customers, payments, complaints, currentUser } = useBillingSystem();
   const [mounted, setMounted] = useState(false);
+  const [recentList, setRecentList] = useState<RecentCustomerItem[]>([]);
 
   useEffect(() => {
     setMounted(true);
+    setRecentList(getRecentCustomers());
   }, []);
 
   const isSubAdmin = currentUser.role === 'Sub Admin';
@@ -100,9 +103,9 @@ export default function DashboardPage() {
 
   const complaintsAssigned = useMemo(() => {
     return complaints.filter(
-      (c) => c.assignedEngineer === 'Noor Jamal' || c.assignedEngineer === currentUser.name
+      (c) => c.status === 'Pending' || c.status === 'Assigned' || c.status === 'In Progress'
     ).length;
-  }, [complaints, currentUser.name]);
+  }, [complaints]);
 
   const pendingComplaintsCount = useMemo(() => {
     return complaints.filter((c) => c.status === 'Pending').length;
@@ -188,7 +191,7 @@ export default function DashboardPage() {
 
       {/* KPI Cards Grid */}
       {isSubAdmin ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3.5 grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total Pending Recovery Customers"
             value={`${pendingRecoveryCount} Users`}
@@ -256,7 +259,7 @@ export default function DashboardPage() {
           />
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3.5 grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total Customers"
             value={totalCustomers}
@@ -580,6 +583,33 @@ export default function DashboardPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Recent Customers (Task 3) */}
+              {recentList.length > 0 && (
+                <div className="md:col-span-2 space-y-3 pt-3 border-t border-border">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Recently Opened Customers</h3>
+                    <span className="text-[10px] text-muted-foreground font-mono">Last 10 Session Records</span>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {recentList.map((item) => (
+                      <Link
+                        key={item.id}
+                        href={`/customers/${item.id}`}
+                        className="p-2.5 rounded-xl border border-border bg-secondary/20 hover:bg-primary/5 hover:border-primary/30 transition-all flex items-center justify-between"
+                      >
+                        <div>
+                          <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                            {item.customerId}
+                          </span>
+                          <h4 className="text-xs font-bold text-foreground mt-1 truncate max-w-[140px]">{item.name}</h4>
+                        </div>
+                        <span className="text-[9px] text-muted-foreground font-mono">{item.openedAt}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </>

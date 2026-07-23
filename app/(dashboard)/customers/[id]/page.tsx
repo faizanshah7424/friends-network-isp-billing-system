@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { addRecentCustomer } from '@/lib/recentAndFavorites';
 
 export default function CustomerDetailsPage() {
   const router = useRouter();
@@ -36,6 +37,7 @@ export default function CustomerDetailsPage() {
     customers,
     invoices,
     payments,
+    complaints,
     addCustomerNote,
     suspendCustomer,
     activateCustomer,
@@ -44,13 +46,26 @@ export default function CustomerDetailsPage() {
     packages,
   } = useBillingSystem();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'billing' | 'notes'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'billing' | 'complaints' | 'notes'>('overview');
   const [newNote, setNewNote] = useState('');
 
   // Find customer
   const customer = useMemo(() => {
     return customers.find((c) => c.id === id || c.customerId === id);
   }, [customers, id]);
+
+  // Save to recent customers on mount
+  React.useEffect(() => {
+    if (customer) {
+      addRecentCustomer({
+        id: customer.id,
+        customerId: customer.customerId || customer.id,
+        name: customer.name,
+        phone: customer.phone,
+        area: customer.area,
+      });
+    }
+  }, [customer]);
 
   // Find customer's package details
   const customerPkg = useMemo(() => {
@@ -69,6 +84,12 @@ export default function CustomerDetailsPage() {
     if (!customer) return payments.filter((p) => p.customerId === id);
     return payments.filter((p) => p.customerId === id || p.customerId === customer.id || (customer.customerId && p.customerId === customer.customerId));
   }, [payments, id, customer]);
+
+  // Find related complaints
+  const customerComplaints = useMemo(() => {
+    if (!customer) return complaints.filter((c) => c.customerId === id);
+    return complaints.filter((c) => c.customerId === id || c.customerId === customer.id || (customer.customerId && c.customerId === customer.customerId));
+  }, [complaints, id, customer]);
 
   // Next Expiry calculation (30 days from installation date)
   const nextExpiryDate = useMemo(() => {
@@ -289,10 +310,10 @@ export default function CustomerDetailsPage() {
         {/* Right Column: Dynamic Tabs (Timeline, Notes, Invoices) */}
         <div className="lg:col-span-2 space-y-6">
           {/* Navigation Tabs */}
-          <div className="flex border-b border-border bg-card p-1 rounded-xl shadow-sm">
+          <div className="flex border-b border-border bg-card p-1 rounded-xl shadow-sm overflow-x-auto">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                 activeTab === 'overview'
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -303,7 +324,7 @@ export default function CustomerDetailsPage() {
             </button>
             <button
               onClick={() => setActiveTab('billing')}
-              className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                 activeTab === 'billing'
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -313,15 +334,26 @@ export default function CustomerDetailsPage() {
               <span>Invoices ({customerInvoices.length})</span>
             </button>
             <button
+              onClick={() => setActiveTab('complaints')}
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                activeTab === 'complaints'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Layers className="h-4 w-4" />
+              <span>Complaints ({customerComplaints.length})</span>
+            </button>
+            <button
               onClick={() => setActiveTab('notes')}
-              className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                 activeTab === 'notes'
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <MessageSquare className="h-4 w-4" />
-              <span>Client Notes ({customer.notes.length})</span>
+              <span>Notes ({customer.notes.length})</span>
             </button>
           </div>
 
@@ -435,6 +467,43 @@ export default function CustomerDetailsPage() {
                   ) : (
                     <div className="py-8 text-center text-xs text-muted-foreground">
                       No payments have been received for this customer.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'complaints' && (
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
+                <div>
+                  <h3 className="font-bold text-base">Support & Outage Complaints</h3>
+                  <p className="text-xs text-muted-foreground">Historical network ticket logs and field engineer resolution history</p>
+                </div>
+
+                <div className="space-y-3">
+                  {customerComplaints.length > 0 ? (
+                    customerComplaints.map((comp) => (
+                      <div key={comp.id} className="rounded-xl border border-border p-4 bg-secondary/10 space-y-2 text-xs">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="font-mono font-bold text-indigo-500">{comp.ticketNumber}</span>
+                            <span className="text-[10px] text-muted-foreground ml-2">{comp.dateCreated}</span>
+                          </div>
+                          <div className="flex gap-1.5">
+                            <StatusBadge status={comp.priority} />
+                            <StatusBadge status={comp.status} />
+                          </div>
+                        </div>
+                        <p className="font-semibold text-foreground leading-relaxed">{comp.issue}</p>
+                        <div className="flex justify-between items-center text-[10px] text-muted-foreground border-t border-border/50 pt-2">
+                          <span>Category: <strong>{comp.category || 'General Outage'}</strong></span>
+                          <span>Assigned Engineer: <strong>{comp.assignedEngineer || 'Unassigned'}</strong></span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-8 text-center text-xs text-muted-foreground">
+                      No support complaints or tickets recorded for this customer.
                     </div>
                   )}
                 </div>

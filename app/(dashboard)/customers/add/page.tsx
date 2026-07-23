@@ -82,10 +82,11 @@ export default function AddCustomerPage() {
     }
   }, [selectedPackageId, activePackages, setValue]);
 
-  const onSubmit = (data: CustomerFormValues) => {
+  const onSubmit = async (data: CustomerFormValues) => {
     // Validate unique Customer ID
     const duplicate = customers.some(
-      (c) => c.id.trim().toLowerCase() === data.id.trim().toLowerCase()
+      (c) => c.id.trim().toLowerCase() === data.id.trim().toLowerCase() ||
+             (c.customerId && c.customerId.trim().toLowerCase() === data.id.trim().toLowerCase())
     );
     if (duplicate) {
       setError('id', {
@@ -97,9 +98,8 @@ export default function AddCustomerPage() {
 
     setIsSubmitting(true);
     
-    // Simulate API delay
-    setTimeout(() => {
-      addCustomer({
+    try {
+      await addCustomer({
         ...data,
         id: data.id.trim(),
       });
@@ -110,7 +110,21 @@ export default function AddCustomerPage() {
       setTimeout(() => {
         router.push('/customers');
       }, 1500);
-    }, 1000);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      const detail = err?.response?.data?.detail;
+      if (detail && typeof detail === 'string') {
+        if (detail.toLowerCase().includes('customer id')) {
+          setError('id', { type: 'manual', message: detail });
+        } else if (detail.toLowerCase().includes('mobile') || detail.toLowerCase().includes('phone')) {
+          setError('phone', { type: 'manual', message: detail });
+        } else {
+          setError('root', { type: 'manual', message: detail });
+        }
+      } else {
+        setError('root', { type: 'manual', message: 'Failed to create customer account. Please try again.' });
+      }
+    }
   };
 
   return (
@@ -157,6 +171,11 @@ export default function AddCustomerPage() {
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-6"
           >
+            {errors.root && (
+              <div className="bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs p-4 rounded-2xl font-bold flex items-center gap-2">
+                <span>{errors.root.message}</span>
+              </div>
+            )}
             {/* Card: Personal Details */}
             <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
               <div className="border-b border-border pb-3">

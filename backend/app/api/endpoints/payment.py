@@ -210,3 +210,44 @@ def bulk_status_active(
     activity_log_repository.create(db, db_obj=log)
 
     return {"message": f"Successfully activated {updated_count} customers"}
+
+@router.get("/{id}/pdf")
+def get_payment_receipt_pdf(
+    id: str,
+    db: Session = Depends(get_db)
+):
+    from fastapi.responses import Response
+    from backend.app.services.pdf_generator import generate_receipt_pdf
+    
+    payment = db.query(Payment).filter((Payment.id == id) | (Payment.receipt_number == id)).first()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment record not found")
+        
+    customer = db.query(Customer).filter(Customer.customer_id == payment.customer_id).first()
+    
+    payment_dict = {
+        "id": payment.id,
+        "receipt_number": payment.receipt_number,
+        "payment_date": payment.payment_date,
+        "customer_id": payment.customer_id,
+        "customer_name": payment.customer_name,
+        "amount_received": payment.amount_received,
+        "payment_method": payment.payment_method,
+        "reference_number": payment.reference_number,
+        "received_by": payment.received_by
+    }
+    
+    customer_dict = {}
+    if customer:
+        customer_dict = {
+            "name": customer.name,
+            "phone": customer.phone
+        }
+        
+    pdf_bytes = generate_receipt_pdf(payment_dict, customer_dict)
+    filename = f"Receipt_{payment.receipt_number}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"inline; filename={filename}"}
+    )

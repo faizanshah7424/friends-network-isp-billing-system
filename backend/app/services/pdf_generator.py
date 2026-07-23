@@ -1,5 +1,5 @@
 import io
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, A5, landscape
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
@@ -81,14 +81,6 @@ def generate_invoice_pdf(invoice_dict: dict, customer_dict: dict = None) -> byte
         fontSize=9,
         leading=13,
         textColor=colors.HexColor('#334155')
-    )
-    body_bold = ParagraphStyle(
-        'InvoiceBodyBold',
-        parent=styles['Normal'],
-        fontName='Helvetica-Bold',
-        fontSize=9,
-        leading=13,
-        textColor=colors.HexColor('#0f172a')
     )
     header_col_style = ParagraphStyle(
         'HeaderColStyle',
@@ -191,6 +183,156 @@ def generate_invoice_pdf(invoice_dict: dict, customer_dict: dict = None) -> byte
 5. One-time charges (OTC) apply at the time of installation and are non-refundable."""
 
     elements.append(Paragraph(terms_html, body_style))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+def generate_receipt_pdf(payment_dict: dict, customer_dict: dict = None) -> bytes:
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A5,
+        rightMargin=24,
+        leftMargin=24,
+        topMargin=24,
+        bottomMargin=24
+    )
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        'ReceiptTitle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=16,
+        leading=20,
+        textColor=colors.HexColor('#065f46')
+    )
+    subtitle_style = ParagraphStyle(
+        'ReceiptSubTitle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor('#047857')
+    )
+    body_style = ParagraphStyle(
+        'ReceiptBody',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=9,
+        leading=13,
+        textColor=colors.HexColor('#1f2937')
+    )
+
+    elements = []
+    elements.append(Paragraph("Friends Network", title_style))
+    elements.append(Paragraph("OFFICIAL PAYMENT RECEIPT", subtitle_style))
+    elements.append(Spacer(1, 10))
+
+    rec_num = payment_dict.get("receipt_number", payment_dict.get("id", "REC-001"))
+    rec_date = payment_dict.get("payment_date", "Jul 23, 2026")
+    cust_name = customer_dict.get("name", payment_dict.get("customer_name", "Subscriber")) if customer_dict else payment_dict.get("customer_name", "Subscriber")
+    cust_id = payment_dict.get("customer_id", "")
+    amount = int(payment_dict.get("amount_received", 0))
+    method = payment_dict.get("payment_method", "Cash")
+    ref_num = payment_dict.get("reference_number", "N/A") or "N/A"
+    received_by = payment_dict.get("received_by", "Admin")
+
+    receipt_info_html = f"<b>Receipt No:</b> {rec_num}<br/><b>Date:</b> {rec_date}<br/><b>Customer ID:</b> {cust_id}<br/><b>Customer Name:</b> {cust_name}"
+    elements.append(Paragraph(receipt_info_html, body_style))
+    elements.append(Spacer(1, 12))
+
+    table_data = [
+        [Paragraph("<b>Payment Details</b>", body_style), Paragraph("<b>Value</b>", body_style)],
+        [Paragraph("Amount Paid", body_style), Paragraph(f"<b>PKR {amount:,}</b>", body_style)],
+        [Paragraph("Payment Method", body_style), Paragraph(method, body_style)],
+        [Paragraph("Reference No", body_style), Paragraph(ref_num, body_style)],
+        [Paragraph("Received By", body_style), Paragraph(received_by, body_style)],
+    ]
+
+    t_rec = Table(table_data, colWidths=[200, 170])
+    t_rec.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#ecfdf5')),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('TOPPADDING', (0,0), (-1,-1), 6),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#a7f3d0')),
+    ]))
+    elements.append(t_rec)
+    elements.append(Spacer(1, 15))
+
+    words = number_to_words_pk(amount)
+    elements.append(Paragraph(f"<b>Amount in Words:</b> {words}", body_style))
+    elements.append(Spacer(1, 15))
+    elements.append(Paragraph("Thank you for your payment. This receipt is computer-generated.", subtitle_style))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+def generate_report_pdf(report_title: str, summary_rows: list, headers: list, data_rows: list) -> bytes:
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=36,
+        bottomMargin=36
+    )
+    styles = getSampleStyleSheet()
+
+    title_style = ParagraphStyle(
+        'ReportTitle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=18,
+        leading=22,
+        textColor=colors.HexColor('#1e293b')
+    )
+    body_style = ParagraphStyle(
+        'ReportBody',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=8,
+        leading=11,
+        textColor=colors.HexColor('#334155')
+    )
+    header_style = ParagraphStyle(
+        'ReportHeaderCol',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=8,
+        leading=11,
+        textColor=colors.HexColor('#0f172a')
+    )
+
+    elements = []
+    elements.append(Paragraph("Friends Network — " + report_title, title_style))
+    elements.append(Spacer(1, 10))
+
+    if summary_rows:
+        sum_html = "<br/>".join([f"<b>{k}:</b> {v}" for k, v in summary_rows])
+        elements.append(Paragraph(sum_html, body_style))
+        elements.append(Spacer(1, 12))
+
+    # Construct main table
+    table_content = [[Paragraph(h, header_style) for h in headers]]
+    for row in data_rows:
+        table_content.append([Paragraph(str(cell), body_style) for cell in row])
+
+    col_count = len(headers)
+    avail_width = 770
+    col_w = avail_width / max(col_count, 1)
+
+    t_report = Table(table_content, colWidths=[col_w] * col_count)
+    t_report.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f1f5f9')),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e1')),
+    ]))
+    elements.append(t_report)
 
     doc.build(elements)
     buffer.seek(0)
